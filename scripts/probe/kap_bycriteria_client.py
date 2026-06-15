@@ -116,7 +116,7 @@ def fetch_year(year: int, cache: bool = True) -> list[dict]:
     if cache and cf.exists():
         return json.loads(cf.read_bytes())
     recs = fetch_range(_dt.date(year, 1, 1), _dt.date(year, 12, 31))
-    if cache:
+    if cache and recs:          # never cache an empty/failed pull (would poison re-runs)
         cf.write_text(json.dumps(recs, ensure_ascii=False), encoding="utf-8")
     return recs
 
