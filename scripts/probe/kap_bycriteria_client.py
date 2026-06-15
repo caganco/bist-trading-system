@@ -62,13 +62,28 @@ def _session() -> requests.Session:
     return s
 
 
+THROTTLE_S = 0.6        # polite gap between requests (bulk backfill triggers WAF rate-limiting)
+MAX_RETRY = 4
+
+
 def _query(s: requests.Session, fr: str, to: str, disclosure_class: str = "ODA") -> list[dict]:
     body = {"fromDate": fr, "toDate": to, "disclosureClass": disclosure_class, "subjectList": [],
             "mkkMemberOidList": [], "inactiveMkkMemberOidList": [], "bdkMemberOidList": [],
             "fromSrc": False, "disclosureIndexList": []}
-    r = s.post(API, json=body, timeout=35)
-    r.raise_for_status()
-    return r.json()
+    for attempt in range(MAX_RETRY):
+        time.sleep(THROTTLE_S)
+        try:
+            r = s.post(API, json=body, timeout=35)
+            if r.status_code in (403, 429, 500, 502, 503):   # WAF / rate-limit -> back off
+                time.sleep(2.0 * (attempt + 1) ** 2)
+                continue
+            r.raise_for_status()
+            return r.json()
+        except requests.RequestException:
+            if attempt == MAX_RETRY - 1:
+                raise
+            time.sleep(2.0 * (attempt + 1) ** 2)
+    return []
 
 
 def fetch_range(fr: _dt.date, to: _dt.date, s: requests.Session | None = None,
