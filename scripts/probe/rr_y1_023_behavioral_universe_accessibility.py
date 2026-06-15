@@ -93,6 +93,48 @@ def ssf_underlyings(n_recent: int = 24) -> set[str]:
     return out
 
 
+def warrant_put_underlyings(ticker_set: set[str], min_monthly_val_tl: float = 1e6) -> dict:
+    """Single-stock PUT-warrant underlyings from the latest full daily bulletin.
+
+    Equity warrant groups in PP_GUNSONUFIYATHACIM: ECW = equity call warrant,
+    EPW = equity put warrant. The instrument short-name (BULTEN ADI) is prefixed by the
+    underlying code; index/commodity/FX warrants (XAU, BRENT, XU030, DAX, ...) do not match
+    an equity ticker and are excluded. Returns the set of equity underlyings that carry a
+    PUT warrant whose monthly traded value clears the liquidity floor (dead quotes excluded).
+    """
+    files = sorted(glob.glob(f"{ARCH}/prices_official/PP_GUNSONUFIYATHACIM.M.*.csv"))
+    if not files:
+        return {"all_put": set(), "liquid_put": set(), "monthly_val": {}}
+    raw = open(files[-1], encoding="windows-1254", errors="replace").read().splitlines()
+    cols = {c.strip(): i for i, c in enumerate(raw[0].split(";"))}
+    g_i, nm_i, vol_i = cols["ENSTRUMAN GRUBU"], cols["BULTEN ADI"], cols["TOPLAM ISLEM HACMI"]
+    tickers = sorted((t for t in ticker_set if len(t) >= 4), key=len, reverse=True)
+    put_val: dict[str, float] = {}
+
+    def _match(name: str) -> str | None:
+        for t in tickers:
+            if name.startswith(t):
+                nxt = name[len(t):len(t) + 1]
+                if nxt in ("C", "P", "S", "T", "V") or nxt.isdigit():
+                    return t
+        return None
+
+    for line in raw[2:]:
+        p = line.split(";")
+        if len(p) <= vol_i or p[g_i].strip() != "EPW":
+            continue
+        u = _match(p[nm_i].strip())
+        if u is None:
+            continue
+        try:
+            v = float(p[vol_i]) if p[vol_i].strip() else 0.0
+        except ValueError:
+            v = 0.0
+        put_val[u] = put_val.get(u, 0.0) + v
+    liquid = {u for u, v in put_val.items() if v >= min_monthly_val_tl}
+    return {"all_put": set(put_val), "liquid_put": liquid, "monthly_val": put_val}
+
+
 def _parse_short_month(path: str) -> set[str]:
     """Short-sale-eligible/active tickers in one monthly bulletin (csv or xlsx)."""
     z = zipfile.ZipFile(path)
@@ -145,16 +187,21 @@ def build_universe_metrics(df: pd.DataFrame) -> pd.DataFrame:
     return m
 
 
-def coverage(m: pd.DataFrame, names: list[str], short_set: set[str], ssf_set: set[str]) -> dict:
+def coverage(m: pd.DataFrame, names: list[str], short_set: set[str], ssf_set: set[str],
+             put_set: set[str] | None = None) -> dict:
+    put_set = put_set or set()
     sub = m.loc[[n for n in names if n in m.index]]
     adv = sub["adv"]
-    neg = sub.index.to_series().apply(lambda t: t in short_set or t in ssf_set)
+    neg = sub.index.to_series().apply(lambda t: t in short_set or t in ssf_set or t in put_set)
+    put = sub.index.to_series().isin(put_set)
     res = {
         "n": int(len(sub)),
         "neg_name_pct": round(100 * neg.mean(), 1),
         "neg_adv_pct": round(100 * adv[neg.values].sum() / adv.sum(), 1) if adv.sum() else 0.0,
         "short_name_pct": round(100 * sub.index.to_series().isin(short_set).mean(), 1),
         "ssf_name_pct": round(100 * sub.index.to_series().isin(ssf_set).mean(), 1),
+        "liquid_put_warrant_name_pct": round(100 * put.mean(), 1),
+        "liquid_put_warrant_adv_pct": round(100 * adv[put.values].sum() / adv.sum(), 1) if adv.sum() else 0.0,
         "median_adv_tl": round(float(adv.median()), 0),
     }
     for thr in LIQ_THRESHOLDS_TL:
@@ -178,9 +225,12 @@ def main() -> None:
     a_broad = m[((m["vol_hi"]) | (m["maxret_hi"]) | (m["adv_lo"])) & (m["bist100"] != 1)].index.tolist()
     a_core = m[(m["vol_hi"]) & (m["maxret_hi"]) & (m["bist100"] != 1)].index.tolist()
 
+    wt = warrant_put_underlyings(set(df["symbol"].unique()))
+    liquid_put = wt["liquid_put"]
+
     # structural check: is negative-view eligibility a subset of the index?
     last = df[df["date"] == end].set_index("symbol")
-    neg_all = short_union | ssf
+    neg_all = short_union | ssf | liquid_put
     outside_idx = sorted(t for t in neg_all if t in last.index and last.loc[t, "bist100"] != 1)
 
     report = {
@@ -188,13 +238,14 @@ def main() -> None:
         "frozen_short_window": f"{SS_WIN_LO}..{SS_WIN_HI}",
         "n_ssf_underlyings": len(ssf),
         "n_short_eligible_union": len(short_union),
+        "n_equity_put_warrant_underlyings": len(wt["all_put"]),
+        "n_liquid_put_warrant_underlyings": len(liquid_put),
         "neg_eligibility_outside_bist100": outside_idx,
         "short_active_by_month": {k: len(v) for k, v in sorted(ss_month.items()) if k >= "202101"},
-        "universe_B_liquid_largecap": coverage(m, universe_b, short_union, ssf),
-        "universe_A_broad_speculative": coverage(m, a_broad, short_union, ssf),
-        "universe_A_core_lottery": coverage(m, a_core, short_union, ssf),
+        "universe_B_liquid_largecap": coverage(m, universe_b, short_union, ssf, liquid_put),
+        "universe_A_broad_speculative": coverage(m, a_broad, short_union, ssf, liquid_put),
+        "universe_A_core_lottery": coverage(m, a_core, short_union, ssf, liquid_put),
         "feasibility_blocked": {
-            "warrant_underlying_list": "no offline archive; public BIST list exists, not pulled this round",
             "securities_lending_SLB_OPP": "no offline archive; executed short-sale volume is a joint short+borrow proxy",
         },
     }

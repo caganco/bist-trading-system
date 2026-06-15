@@ -18,7 +18,7 @@ tek-hisse-futures) **ters-örtüşür mü?** Forward-zaman/sermaye harcamadan y�
 |---|---|---|---|---|---|
 | **Açığa-satış izinli/aktif liste** | **VAR** | 2009-01 → 2026-05 (210 aylık dosya) | aylık, per-pay | public DataStore ürünü (offline kanonik arşiv) | `PP_ACIGASATIS` / `acigasat` bültenleri; per-pay işlem-hacmi(TL)/miktar. İzinli-olduğunda ~50 isim listede, **yasakta 0**. |
 | **SSF (tek-hisse VİOP futures) dayanak listesi** | **VAR** | 2017-03 → 2026-05 (yoğun 2019+) | aylık, per-kontrat | public DataStore 3208 (offline kanonik) | `VIOP_GUNSONU_FIYATHACIM` ana-seri, segment `SSF`/`D_EQ_FPD`; **50 distinct dayanak** (son-24-ay). (RR-Y1-017 ile tutarlı.) |
-| **Varant ihraççı/dayanak listesi** | **OFFLINE-YOK** | — | — | online-public-var (çekilmedi) | Repoda arşiv yok → bu turda **feasibility-bloklu**; sayı **varsayılmadı**, "ölçülmedi" işaretlendi. |
+| **Varant ihraççı/dayanak listesi** | **VAR** (§5'te ölçüldü) | 1988-01 → 2026-05 | aylık (günsonu-bültenden), per-seri | public DataStore ürünü (offline kanonik) | İlk-sürümde "offline-yok" sanılmıştı; tam günsonu-bülteni `PP_GUNSONUFIYATHACIM` **tüm-piyasayı** kapsar — `ECW`=alım-varantı / `EPW`=**satım(put)-varantı**. §5'te ölçüldü. |
 | **Pay-bazında ödünç-pay (SLB/ÖPP) bakiyesi** | **OFFLINE-YOK** | — | — | — | Repoda per-pay borrow-bakiyesi yok. Açığa-satış **işlem-hacmi** birleşik (short+borrow) alt-sınır proxy'sidir (bir pay shortlandıysa borrow vardı). |
 | **Evren / likidite / PIT endeks-üyeliği** | **VAR** | 2019-01 → 2026-05 (1848 gün) | günlük, 681 sembol | proje temiz-paneli (D-202) | `adjusted_prices_2019_2026.parquet`: `value_tl` (ADV), `adjusted_close`, PIT `bist30`/`bist100`. |
 
@@ -77,7 +77,7 @@ Sonuç (A=%0 vs B=%100) keskin olduğundan, A-tanımının (bist100-dışı) **m
 | Negatif-ifade-% (ADV-ağırlıklı) | **0.0** | **0.0** | **100.0** |
 | — açığa-satız-izinli-% | 0.0 | 0.0 | 100.0 |
 | — SSF-kapsama-% | 0.0 | 0.0 | 96.7 |
-| Varant-kapsama-% | ölçülmedi (offline-bloklu) | ölçülmedi | ölçülmedi |
+| — likit-put-varant-% (isim / ADV) | 0.0 / 0.0 | 0.0 / 0.0 | 93.3 / 98.9 |
 | Borrow-kapsama-% | ölçülmedi (SLB offline-yok; short-hacmi birleşik-proxy) | ölçülmedi | (short-izniyle eşdeğer) |
 | Medyan-ADV (TL) | 1.58M | 2.65M | 31.8M |
 | Long-ifade-% @ 5M TL | 28.5 | 38.8 | 83.3 |
@@ -90,14 +90,37 @@ anlamlı-pozisyon long-tarafta dahi kapasite-sınırlıdır; negatif-tarafta tü
 
 ---
 
+## §5 — Varant negatif-view rotası (kapanış-probe'u)
+
+RR-Y1-023'ün tek açık-kalan negatif-view rotası: **varant** (short-izni/SSF gerektirmez).
+Bu, tam günsonu-bülteninden (`PP_GUNSONUFIYATHACIM`, offline kanonik) **ölçüldü** —
+canlı-fetch/credential gerekmedi (DISC-13). Snapshot: en-güncel aylık bülten (2026-05).
+
+- **Put-varant VAR.** Tek-hisse satım-varantı (`EPW` grubu) **30 distinct dayanak** için
+  ihraçta; 29'u likit (≥1M TL/ay; yalnız VAKBN-put ölü-kotasyon <1M). Tek-hisse alım-varantı
+  (`ECW`) da aynı 30 dayanak. Endeks/emtia/FX varantları (XAU/BRENT/XU030/DAX/NASDAQ…) ayrı
+  işaretlendi, tek-hisse-evreninden hariç tutuldu.
+- **Put-varant dayanakları endeksin SIKI alt-kümesi.** 30 dayanağın **30'u bist100, 29'u
+  bist30, 0'ı endeks-dışı** — short-izinli + SSF listeleriyle aynı büyük-cap kümesi.
+- **Kesişim:** likit-put-varant-kapsama (eşik ≥1M TL/ay) = **Evren-A_broad 0.0% / A_core 0.0%
+  (isim ve ADV)**; **Evren-B 93.3% isim / 98.9% ADV** (≥10M TL/ay eşiğinde B 80.0% / 97.6%).
+- Endeks-filtresiz üst-vol tercilinde (n=198) likit-put-varantı olan tek-isim = TRALT (o da bist100).
+
+**Sonuç (olgu):** varant rotası F1-hükmünü **değiştirmez** — negatif-görüş varant-yoluyla da
+yalnız ~30 büyük-cap endeks-isminde ifade-edilebilir; spekülatif havuzda **%0**. Negatif-view'in
+üç rotası da (açığa-satış, SSF, put-varant) aynı büyük-cap alt-kümesine kilitlidir.
+
+---
+
 ## NET CÜMLE (öneri-içermeyen)
 
-- **Evren-A (spekülatif) negatif-ifade-% = 0.0** (isim- ve ADV-ağırlıklı; açığa-satış 0.0, SSF 0.0).
-- **Evren-B (likit-büyük-cap) negatif-ifade-% = 100.0** (açığa-satış 100.0, SSF 96.7).
-- Negatif-görüş enstrümanları (açığa-satış-izinli liste + SSF dayanakları) **BIST-100'ün sıkı
-  alt-kümesidir**; davranışsal-alfanın yaşayacağı endeks-dışı spekülatif havuzu **sıfır** kapsar
-  (F1 ters-örtüşmesi yapısal ve sağlam). İzinli-isimler için bile açığa-satış **aralıklı-yasaklıdır**
-  (son ~40 ayın 24'ünde kapalı).
+- **Evren-A (spekülatif) negatif-ifade-% = 0.0** (isim- ve ADV-ağırlıklı; açığa-satış 0.0, SSF 0.0,
+  **likit-put-varant 0.0**).
+- **Evren-B (likit-büyük-cap) negatif-ifade-% = 100.0** (açığa-satış 100.0, SSF 96.7, put-varant 93.3).
+- Negatif-görüşün **üç rotası da** (açığa-satış-izinli liste + SSF dayanakları + put-varant dayanakları)
+  **BIST-100'ün sıkı alt-kümesidir**; davranışsal-alfanın yaşayacağı endeks-dışı spekülatif havuzu
+  **sıfır** kapsar (F1 ters-örtüşmesi yapısal ve sağlam). İzinli-isimler için bile açığa-satış
+  **aralıklı-yasaklıdır** (son ~40 ayın 24'ünde kapalı).
 
 ---
 
@@ -108,8 +131,9 @@ anlamlı-pozisyon long-tarafta dahi kapasite-sınırlıdır; negatif-tarafta tü
 - Açığa-satış bülteni **gerçekleşen** short işlem-hacmidir; izin-listesi ile birebir aynı olmayabilir
   (izinli-ama-işlemsiz isim teorik olarak listede görünmeyebilir) → açığa-satış-izinli-% bu yönde
   **alt-sınır** olabilir, ama 58-isim havuzu hepsi-bist100 olduğundan F1-sonucu bu belirsizliğe duyarsızdır.
-- Varant ve per-pay SLB/ÖPP bu turda **offline-bloklu** → ölçülmedi, varsayılmadı. Varant ihraçları
-  tipik olarak likit dayanaklara odaklanır (yapısal beklenti), ama bu turda **sayı üretilmedi**.
+- Varant **§5'te ölçüldü** (günsonu-bültenden, offline kanonik). Per-pay SLB/ÖPP hâlâ **offline-yok**
+  → ölçülmedi, varsayılmadı (short-hacmi birleşik proxy). Varant-dayanak eşleme isim-prefiks-eşleşmesiyle
+  (≥4-harf ticker + yapısal-sonek/rakam) yapıldı; endeks/emtia/FX varantları hariç tutuldu.
 - KOZAA/KOZAL açığa-satış/SSF listelerinde ama temiz-panelde yok (survivorship/veri-kapsamı); endeks-içi
   sınıflandırmada panele-düşenler kullanıldı.
 - Go/no-go **maintainer kararıdır**; bu rapor olgu-sağlar, hüküm-vermez. Fork seçenekleri (kanal-daralt /
@@ -117,6 +141,7 @@ anlamlı-pozisyon long-tarafta dahi kapasite-sınırlıdır; negatif-tarafta tü
 
 Kaynaklar (repo-içi, read-only): `data/bist_datastore_archive/short_selling/` (PP_ACIGASATIS) ·
 `data/bist_datastore_archive/viop/` (VIOP_GUNSONU_FIYATHACIM, segment SSF) ·
+`data/bist_datastore_archive/prices_official/` (PP_GUNSONUFIYATHACIM, ECW/EPW varant grupları) ·
 `data/clean_universe/adjusted_prices_2019_2026.parquet` (D-202) ·
 prob-script `scripts/probe/rr_y1_023_behavioral_universe_accessibility.py` (sayım/bayrak-only, getiri-yok, DEC-053-safe).
 Dış-bağlam: Bali-Cakici-Whitelaw 2011 (MAX/lottery); Coval-Stafford 2007 (forced flow); RR-Y1-017 (SSF veri-fizibilite).
