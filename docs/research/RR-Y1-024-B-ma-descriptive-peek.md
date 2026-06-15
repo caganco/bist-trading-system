@@ -17,74 +17,74 @@ sonra). Çağrı-fiyatı anons-öncesi-6-ay-VWAP tabanlı → spread +/− olabi
 
 ---
 
-## §0 — Veri-kapsamı (DÜRÜST sınır)
+## §0 — Veri-kapsamı
 
-byCriteria (RR-Y1-025) ile ODA çekildi; **bulk-backfill KAP-WAF kümülatif rate-limit'ine çarptı**
-→ throttle+backoff eklendi ama oturum-cezası nedeniyle **yalnız 3 yıl indi: 2019, 2020, 2025**
-(2021-2024/2026 boş-döndü, poisoned-cache silindi). **Bu PARTIAL bir peek**; tam-peek throttle'lı
-çok-oturumlu backfill gerektirir (RR-Y1-025 kalan-mühendislik). Tüm sayılar **indikatif**, N-küçük.
+byCriteria (RR-Y1-025) ile ODA çekildi; throttle (`KAP_THROTTLE_S=1.5`) + backoff ile nazik-pace.
+**Kapsam: 7/8 yıl — 2019, 2020, 2021, 2022, 2023, 2025, 2026** (kümülatif KAP-WAF rate-limit'i
+geçiciydi, resetlendi; nazik-pace yeniden-tetiklemedi). **2024 indirilemedi** (HTTPError;
+raise-on-fail ile **temiz-iptal — partial cache'lenmedi**, susarak-eksik-saymadı). N hâlâ
+mütevazı → pencere-dağılımları **indikatif**.
 
-- tender ("Pay Alım Teklifi Yoluyla Pay Toplanması") ham-bildirim: **286** (3 yıl; günlük-tekrarlı)
-- episode'a indirgenmiş (ticker × 60g-gap): **35 episode**; **distinct 25 ticker**
-- **panel-içi (681 temiz-evren): yalnız 5 ticker** (A1CAP, ARTI, DENIZ, INFO, ISMEN), **9 episode**
-- **panel-DIŞI: 26 episode (≈%74)** — mikro-cap, temiz-evrene bile girmiyor
+- tender ("Pay Alım Teklifi Yoluyla Pay Toplanması") ham-bildirim: **554** (günlük-tekrarlı)
+- episode'a indirgenmiş (ticker × 60g-gap): **69 episode**; 
+- **panel-içi (681 temiz-evren): yalnız 16 episode** (≈%23); **panel-DIŞI: 53 episode (≈%77)** mikro-cap
 
 ---
 
 ## §1 — t0/t1 ayrımı
 
-- 9 panel-içi episode'un **6'sında t0 tespit-edilebildi** (aynı-ticker, t1-öncesi 180-işgünü
-  içinde kontrol-cue bildirimi: birleşme/devir/satın-alma/hâkim-ortak/kontrol-değişimi).
-- **t0→t1 gap: medyan ≈122 gün** (IQR 86-215 gün) → **mevzuatı doğrular** (fiili-teklif, kontrol-
+- 16 panel-içi episode'un **13'ünde t0 tespit-edilebildi** (aynı-ticker, t1-öncesi 180-işgünü
+  içinde kontrol-cue: birleşme/devir/satın-alma/hâkim-ortak/kontrol-değişimi).
+- **t0→t1 gap: medyan ≈128 gün** (IQR 88-244) → **mevzuatı doğrular** (fiili-teklif, kontrol-
   olayından ~4 ay sonra). t1 = mekanik/geç-tarih; bilgi t0'da.
 
-## §2 — Pencere-bazlı betimsel dağılım (medyan / IQR)
+## §2 — Pencere-bazlı betimsel dağılım (medyan / IQR; indikatif)
 
-**t1-merkezli (fiili-teklif, N=7) — priced-out testi:**
+**t1-merkezli (fiili-teklif, N=12) — priced-out testi:**
 
 | Pencere (işgünü) | Ham medyan | Ham IQR | XU100-rel medyan | XU100-rel IQR |
 |---|---|---|---|---|
-| pre [t1−5, t1−1] | +0.48% | [−1.01, +2.39] | **−2.06%** | [−4.53, −0.86] |
-| anons [t1, t1+1] | −0.35% | [−4.0, +0.94] | **−1.13%** | [−2.42, +1.91] |
-| post [t1+2, t1+20] | +9.65% | [+2.09, **+39.59**] | +5.8% | [−2.98, +37.49] |
+| pre [t1−5, t1−1] | +0.24% | [−2.22, +3.62] | **−2.58%** | [−3.94, +1.89] |
+| anons [t1, t1+1] | +0.64% | [−2.54, +2.33] | **−0.00%** | [−1.43, +2.87] |
+| post [t1+2, t1+20] | +4.89% | [−2.82, +22.74] | **−2.95%** | [−6.6, +21.25] |
 
-→ Fiili-teklifte (t1) **pozitif anons-sıçraması YOK** (rel −1.13%) — **priced-out/mekanik
-desenle tutarlı** (index-recon-akrabası: teklif önceden-bilinir). post-t1 +9.65% ham **çok-geniş
-IQR** (üst +39.59%) → 1-2 isim-kaynaklı, merkezî-eğilim değil; N=7'de okunamaz.
+→ Fiili-teklifte (t1) **anons-sıçraması YOK** (rel ≈0.00%) — **priced-out/mekanik desenle
+tutarlı** (index-recon-akrabası). post-t1 XU100-rel **−2.95%** (geniş-IQR) — **pozitif-drift yok**;
+(daha-küçük-N=7'deki +5.8% rel **küçük-örnek-artefaktıydı**, fuller-veride kayboldu/negatife-döndü).
 
-**t0-merkezli (kontrol-olayı, N=3) — ÇOK-KÜÇÜK:** pre rel +0.93% / anons rel −2.34% / post rel
-−8.15%. **N=3 yorumlanamaz** (gürültü); yalnız tamlık için kaydedildi.
+**t0-merkezli (kontrol-olayı, N=6) — KÜÇÜK:** pre rel +1.12% / anons rel −0.36% (IQR straddle-0) /
+post rel +2.1% (IQR [−5.86,+8.1]). **N=6 hepsi sıfırı-kesiyor** → kontrol-olayında da net-jump-yok
+(bu örneklemde); indikatif.
 
 ## §3 — Çağrı-spread
 
 **PARSE-NEEDED.** Çağrı-fiyatı byCriteria top-level-alanı **değil** (teklif-bilgi-formu ek'inde) →
-zorlanmadı (DISC-12). priced-out'un kesin-ölçümü bu parse'a bağlı; §2 t1-no-jump bulgusu dolaylı-
-gösterge ama spread-değil.
+zorlanmadı (DISC-12). priced-out'un kesin-ölçümü bu parse'a bağlı; §2 t1-no-jump dolaylı-gösterge.
 
 ## §4 — Tradability kesişimi (RR-Y1-024 skew testi)
 
-Panel-içi tender-target'ların t1-öncesi 252-işgünü ADV'si: **medyan 2.15M TL**; ADV≥5M **%14.3**,
-≥25M **%0.0**, ≥100M **%0.0**. + episode'ların **%74'ü panel-dışı** (mikro-cap). →
-**RR-Y1-024'ün mikro-cap-skew'ini TEYİT eder** (red-etmez): tender-target evreni ezici-çoğunlukla
+Panel-içi tender-target'ların t1-öncesi 252-işgünü ADV'si: **medyan 2.33M TL**; ADV≥5M **%25.0**,
+≥25M **%0.0**, ≥100M **%0.0**. + episode'ların **%77'si panel-dışı** (mikro-cap). →
+**RR-Y1-024'ün mikro-cap-skew'ini güçlü-TEYİT** (7-yıl, N=16): tender-target evreni ezici-çoğunlukla
 illikit; potansiyel spread/drift olsa-bile likit-olmayan isimlerde.
 
 ---
 
 ## NET CÜMLE (öneri-içermez)
 
-Betimsel olarak: (a) tender-target'lar **mikro-cap/panel-dışı** (N'den-bağımsız, sağlam — %74
-panel-dışı, panel-içi medyan-ADV 2.15M TL, %0 ≥25M); (b) **fiili-teklifte (t1) pozitif anons-
-sıçraması yok** (XU100-rel −1.13%), priced-out/mekanik tehditle tutarlı; (c) post-t1 (+9.65% ham,
-IQR çok-geniş) ve t0-merkezli (N=3) sinyaller **karakterize-edilemeyecek-kadar-ince**; (d) çağrı-
-spread **ek-form-parse gerektirir**. Peek **PARTIAL** (3 yıl: 2019/2020/2025; gerisi WAF-rate-
-limit). HÜKÜM yok.
+Betimsel olarak (7 yıl, 16 panel-içi episode): (a) tender-target'lar **mikro-cap/panel-dışı**
+(%77 panel-dışı, panel-içi medyan-ADV 2.33M TL, %0 ≥25M — sağlam, N-bağımsız); (b) **fiili-teklifte
+(t1) anons-sıçraması yok** (XU100-rel ≈0.00%) + post-t1 **−2.95% rel** (pozitif-drift yok) →
+priced-out/mekanik tehditle tutarlı; (c) t0-merkezli (N=6) net-jump-yok ama çok-ince; (d) çağrı-
+spread **ek-form-parse gerektirir**. 2024 indirilemedi (7/8 yıl). HÜKÜM/fork yok.
 
 ---
 
 ## Caveat'lar
-- **PARTIAL veri** (3 yıl) + **küçük-N** (9 episode / 7 fiyatlı / 3 t0): §2/§3 **indikatif**, ölçüm-değil.
+- **Mütevazı-N** (16 panel-içi episode / 12 fiyatlı / 6 t0): §2/§3 **indikatif**, ölçüm-değil.
+- 2024 indirilemedi (raise-on-fail temiz-iptal); 7/8 yıl. Diğer yıllar nazik-pace ile tam-indi.
 - t0-tespiti keyword-tabanlı yaklaşık (kontrol-cue subject/summary); gerçek-t0 metin-parse'la kesinleşir.
-- post-t1 +9.65% geniş-IQR = isim-kaynaklı; tender-süresince fiyat teklif-fiyatına-pinlenir, ham-getiri yanıltıcı olabilir.
+- post-t1 ham-getiri yanıltıcı olabilir (tender-süresince fiyat teklif-fiyatına-pinlenir); XU100-rel daha-anlamlı, o da ≈−3%.
 - Çağrı-spread ölçülmedi (top-level-yok); priced-out kesin-hükmü parse'a bağlı.
 - DISC-10: ex-ante-sabit iş-günü pencereler, ex-post-seçim-yok, look-ahead-safe. HÜKÜM/fork yok — maintainer'a.
 

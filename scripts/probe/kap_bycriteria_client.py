@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import os
 import time
 from pathlib import Path
 
@@ -62,7 +63,7 @@ def _session() -> requests.Session:
     return s
 
 
-THROTTLE_S = 0.6        # polite gap between requests (bulk backfill triggers WAF rate-limiting)
+THROTTLE_S = float(os.getenv("KAP_THROTTLE_S", "0.6"))  # polite inter-request gap; raise for bulk backfill
 MAX_RETRY = 4
 
 
@@ -83,7 +84,9 @@ def _query(s: requests.Session, fr: str, to: str, disclosure_class: str = "ODA")
             if attempt == MAX_RETRY - 1:
                 raise
             time.sleep(2.0 * (attempt + 1) ** 2)
-    return []
+    # all attempts exhausted on 4xx/5xx -> raise so a failed sub-window aborts the whole
+    # range (never silently returns [] -> partial-year undercount cached as if complete)
+    raise requests.HTTPError(f"byCriteria exhausted {MAX_RETRY} retries for {fr}..{to}")
 
 
 def fetch_range(fr: _dt.date, to: _dt.date, s: requests.Session | None = None,
