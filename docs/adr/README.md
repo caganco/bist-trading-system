@@ -9,12 +9,22 @@ that supersedes it. Immutability is enforced in CI.
 
 Naming: `ADR-NNNN-title.md`, monotonic, never reused.
 
-## Status
+## Contents
 
-The directory is a scaffold. No records have been written yet — see
-[GHOST_DEC_INVENTORY.md](GHOST_DEC_INVENTORY.md) for the decision identifiers that are
-referenced from code and research but have no record behind them; backfilling those is a
-separate piece of work.
+[INDEX.md](INDEX.md) lists all ten records. [ADR-0000](ADR-0000-adopt-decision-records.md)
+establishes the practice; ADR-0003 through ADR-0009 are a bounded backfill of decisions that
+were already in force and referenced across the codebase, but had never been written down.
 
-Earlier decisions live in [`../decisions/`](../decisions/) and [`../DECISIONS.md`](../DECISIONS.md).
-Both are retained for history and are superseded by this discipline.
+The invariants these records establish are collected in
+[`../disciplines.md`](../disciplines.md).
+
+## Dangling identifiers
+
+[GHOST_DEC_INVENTORY.md](GHOST_DEC_INVENTORY.md) tracks decision identifiers that are cited but
+have no record. Four are now resolved to ADRs. The rest are marked *definition unrecoverable* and
+left as honest dangling pointers — a reference to a decision that was never written down is a
+true statement about this project's history, and inventing a record to cover it would not be.
+
+The earlier decision store lives in [`../decisions/`](../decisions/) and
+[`../DECISIONS.md`](../DECISIONS.md). Both are retained for history and superseded by this
+discipline.

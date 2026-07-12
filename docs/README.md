@@ -46,15 +46,17 @@ file so inbound references stay traceable.
 
 Stated here rather than left for a reader to trip over:
 
-- `adr/` is a scaffold. No records are written yet, and the decision history still lives in
-  [`decisions/`](decisions/) and [`DECISIONS.md`](DECISIONS.md) — both retained, both superseded
-  by the ADR discipline.
-- 13 decision identifiers are cited from code and research but have no record behind them; two of
-  them appear in dozens of files. They are inventoried in
-  [`adr/GHOST_DEC_INVENTORY.md`](adr/GHOST_DEC_INVENTORY.md). The inventory does not invent the
-  missing records.
-- `disciplines.md` is a stub. The `DISC-NN` rules are currently restated inline in each record
-  that cites them; the register that ends that duplication is not yet backfilled.
+- 10 of the 14 dangling decision identifiers are still dangling. Four are resolved to ADRs — the
+  three heaviest among them, which accounted for most of the dangling references in the tree. The
+  other ten are marked *definition unrecoverable* in
+  [`adr/GHOST_DEC_INVENTORY.md`](adr/GHOST_DEC_INVENTORY.md) and are left as honest dangling
+  pointers rather than covered with invented records.
+- Call sites still cite the old identifiers. Rewriting them from `DEC-NNN` to the `ADR-NNNN` that
+  now defines them is a separate pass.
+- ADR immutability is not yet enforced in CI. The records are `Accepted` and are meant to be
+  frozen; the guard that makes that binding comes next.
+- The earlier decision store (`decisions/`, `DECISIONS.md`) is retained and superseded, not
+  migrated. It is history, not a second source of truth.
 - A few operational documents (`DATA_HUB.md`, `PRE_COMMIT_SETUP.md`, `SIGNAL_ALERT_USAGE.md`,
   `engine/OPERATOR_GUIDE.md`) and two one-off audits (`AUDIT_REPORT_001.md`,
   `CODEBASE_INVENTORY_v2.md`) still sit at the top level and have not been homed.
