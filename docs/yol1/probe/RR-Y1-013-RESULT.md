@@ -13,7 +13,7 @@
 ## Genel Hüküm: CONDITIONAL
 
 - **G2 ve G4 PASS, G3 PASS (tercile-only), G1 CONDITIONAL.** Panel ay-çözünürlükte
-  bugün kurulabilir; specin sabit T+2 (gün-çözünürlük) giriş parametresi ise
+  bugün kurulabilir; spec'in sabit T+2 (gün-çözünürlük) giriş parametresi ise
   yalnız KAP Katman-2 gün-damgası backfill'i ile uygulanabilir (yol canlı-doğrulandı,
   toplu-çekim yapılmadı).
 
@@ -78,7 +78,7 @@
   **%35,7** (< %80) ve 1 çeyrekte uç-dilim <3 → decile-bazlı sıralama BIST
   likit-evreninde istatistiksel-kapasite taşımaz.
 - **Tercile:** üst/alt dilim ortalama 13,4/13,0; min **7**; her-iki-uç ≥5 olan
-  çeyrek payı **%100**; hiçbir çeyrekte <3 yok → specin tercile-fallback'i
+  çeyrek payı **%100**; hiçbir çeyrekte <3 yok → spec'in tercile-fallback'i
   (Yılmaz et al. 2020 ile uyumlu) tam-kapasiteli.
 - **Likidite-dışlama bulgusu (eleme değil):** SUE-tanımlı olayların çeyrek-ortalaması
   **%81,2'si likit-evren DIŞINDA** kalıyor. PEAD-literatürünün drift'i en güçlü

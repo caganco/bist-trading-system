@@ -7,7 +7,7 @@
 | **Tarih** | 2026-06-09 |
 | **İlişkili RR** | RR-Y1-011, RR-Y1-011-B |
 | **Dayanak** | RR-Y1-011 §4 (look-ahead-safe panel fizibilite engeli F-2) |
-| **Status** | ✅ F-2 kalkabilir — yapı doğrulandı, Stage-0 kararı Orchestrator+the maintainer'a |
+| **Status** | ✅ F-2 kalkabilir — yapı doğrulandı, Stage-0 kararı maintainer'a |
 
 ---
 
@@ -20,7 +20,7 @@
 | IN/OUT açık ayrım | **EVET** | "ALINACAK PAYLAR" vs "ÇIKARILACAK PAYLAR" her tabloda sütun başlığı |
 | Tier (BIST 30/50/100) bilgisi | **EVET** | Her tablo ayrı index başlığı altında (BIST 30 / BIST 50 / BIST 100 ayrı bölüm) |
 | İlan→efektif gün farkı | **11–13 takvim günü** (~9–10 iş günü) | 3 bildirimdeki gözlemler (§2) |
-| F-2 durumu | **KALKABİLİR** | Yeterli koşullar mevcut; scraper speci ayrı task (§5) |
+| F-2 durumu | **KALKABİLİR** | Yeterli koşullar mevcut; scraper çalışması ayrı task (§5) |
 
 ---
 
@@ -150,7 +150,7 @@ sıra | ticker | şirket   sıra | ticker | şirket         sıra | ticker | şi
 ### Adım 1: Disclosure ID Keşfi (Ana Açık Nokta)
 
 2019–2025 arası "BIST Pay Endeksleri - Dönemsel Endeks Değişiklikleri" bildirimlerinin
-ID'lerini KAP'ta arama ile bul (~28 bildirim). **Bu ayrı bir spec gerektirir.**
+ID'lerini KAP'ta arama ile bul (~28 bildirim). **Bu ayrı bir çalışma gerektirir.**
 
 ```python
 # Olası yaklaşım — KAP bildirim arama endpoint (araştırılmadı):
@@ -189,7 +189,7 @@ with pdfplumber.open(io.BytesIO(pdf)) as f:
 
 | # | Soru | Durum |
 |---|------|-------|
-| **O-1** | 2019–2025 disclosure ID'lerinin tamamı | ⏳ KAP arama speci gerekiyor |
+| **O-1** | 2019–2025 disclosure ID'lerinin tamamı | ⏳ KAP arama çalışması gerekiyor |
 | **O-2** | Eski PDF formatı (2019–2022) aynı mı? | ⏳ Test edilmedi (yalnız Q3-2025/Q1-Q2-2026 doğrulandı) |
 | **O-3** | Scraper auth gerekiyor mu? | ✅ HAYIR — 3 bildirim × 2 PDF public doğrulandı |
 | **O-4** | pdfplumber tablo hizalama tutarlı mı? | ✅ EVET — 6 PDF tutarlı (3 bildirim × TR+EN) |
@@ -212,7 +212,7 @@ F-4 (acil ayrımı)        : ÇÖZÜLDÜ (RR-Y1-011-B)
 
 **Stage-0 kararı:** F-2 teknik çözümü bu raporda kanıtlandı (3 bildirim × 2 PDF doğrulandı).
 Efor: orta (~1-2 saatlik scraper + ID keşfi). Stage-0 açılıp açılmaması
-Orchestrator + the maintainer kararıdır.
+Maintainer kararıdır.
 
 ---
 

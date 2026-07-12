@@ -95,19 +95,21 @@ COMMIT_MSG_RULES = [
 PRBODY_EXTRA_RULES: list = []
 
 
-def _load_local_rules() -> None:
-    """Append project-specific rules from the optional git-ignored local file.
+def _load_local_rules() -> bool:
+    """Append project-specific rules from the optional local file.
 
-    Absent file (e.g. a fresh CI checkout) -> generic rules only; never an error.
+    Returns True if the rule set was loaded. The file is kept out of the public tree
+    on purpose, so a plain checkout has only the generic rules. Callers that must not
+    run half-armed (CI) check the return value -- see REQUIRE_LOCAL in main().
     """
     path = Path(LOCAL_PATTERNS_FILE)
     if not path.is_file():
-        return
+        return False
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
-        return
-    for raw in lines:
+        return False
+    for lineno, raw in enumerate(lines, start=1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
@@ -119,12 +121,15 @@ def _load_local_rules() -> None:
         try:
             compiled = re.compile(pat, re.IGNORECASE)
         except re.error:
-            sys.stderr.write(f"warning: bad regex in {path.name}: {pat}\n")
+            # Report the location only. Echoing the pattern would print the rule set
+            # into the CI log, which is public.
+            sys.stderr.write(f"warning: bad regex in the local rule set, line {lineno}\n")
             continue
         if "prbody" in flags:
             PRBODY_EXTRA_RULES.append((compiled, reason))
         else:
             CONTENT_RULES.append((compiled, reason, is_name))
+    return True
 
 
 def _git(args: list[str]) -> str:
@@ -136,7 +141,12 @@ def _git(args: list[str]) -> str:
     return out.stdout
 
 
-def _check_line(path: str, lineno: int, text: str, hits: list[str]) -> None:
+# A hit is (location, reason, offending_text). Keeping the parts separate lets the
+# CI reporter print the location alone -- see _report().
+Hit = tuple[str, str, str]
+
+
+def _check_line(path: str, lineno: int, text: str, hits: list[Hit]) -> None:
     if ALLOW_MARK in text:
         return
     base = Path(path).name
@@ -144,7 +154,7 @@ def _check_line(path: str, lineno: int, text: str, hits: list[str]) -> None:
         if is_name and base in NAME_ALLOW_FILES:
             continue
         if pat.search(text):
-            hits.append(f"{path}:{lineno}: {reason}\n    {text.strip()[:160]}")
+            hits.append((f"{path}:{lineno}", reason, text.strip()[:160]))
 
 
 def _iter_added(diff_text: str):
@@ -167,8 +177,8 @@ def _iter_added(diff_text: str):
     return
 
 
-def scan_diff(diff_text: str) -> list[str]:
-    hits: list[str] = []
+def scan_diff(diff_text: str) -> list[Hit]:
+    hits: list[Hit] = []
     for path, lineno, text in _iter_added(diff_text):
         norm = path.replace("\\", "/")
         if norm in SELF_FILES or Path(path).suffix.lower() in SKIP_EXT:
@@ -177,8 +187,8 @@ def scan_diff(diff_text: str) -> list[str]:
     return hits
 
 
-def scan_all() -> list[str]:
-    hits: list[str] = []
+def scan_all() -> list[Hit]:
+    hits: list[Hit] = []
     for path in _git(["ls-files"]).splitlines():
         norm = path.replace("\\", "/")
         if not path or norm in SELF_FILES or Path(path).suffix.lower() in SKIP_EXT:
@@ -195,36 +205,47 @@ def scan_all() -> list[str]:
     return hits
 
 
-def scan_commit_msg(source: str) -> list[str]:
+def scan_commit_msg(source: str) -> list[Hit]:
     text = sys.stdin.read() if source == "-" else Path(source).read_text(encoding="utf-8", errors="replace")
-    hits: list[str] = []
+    hits: list[Hit] = []
     for i, line in enumerate(text.splitlines(), start=1):
         if ALLOW_MARK in line:
             continue
         for pat, reason in COMMIT_MSG_RULES:
             if pat.search(line):
-                hits.append(f"commit-msg:{i}: {reason}\n    {line.strip()[:160]}")
+                hits.append((f"commit-msg:{i}", reason, line.strip()[:160]))
     return hits
 
 
-def scan_pr_body(source: str) -> list[str]:
+def scan_pr_body(source: str) -> list[Hit]:
     """Scan a PR description ('-' = stdin) for AI attribution, generic leaks, and
     project-internal process narration. Stricter than file scans by design."""
     text = sys.stdin.read() if source == "-" else Path(source).read_text(encoding="utf-8", errors="replace")
-    hits: list[str] = []
+    hits: list[Hit] = []
     for i, line in enumerate(text.splitlines(), start=1):
         if ALLOW_MARK in line:
             continue
         for pat, reason in COMMIT_MSG_RULES:
             if pat.search(line):
-                hits.append(f"pr-body:{i}: {reason}\n    {line.strip()[:160]}")
+                hits.append((f"pr-body:{i}", reason, line.strip()[:160]))
         for pat, reason, _is_name in CONTENT_RULES:
             if pat.search(line):
-                hits.append(f"pr-body:{i}: {reason}\n    {line.strip()[:160]}")
+                hits.append((f"pr-body:{i}", reason, line.strip()[:160]))
         for pat, reason in PRBODY_EXTRA_RULES:
             if pat.search(line):
-                hits.append(f"pr-body:{i}: {reason}\n    {line.strip()[:160]}")
+                hits.append((f"pr-body:{i}", reason, line.strip()[:160]))
     return hits
+
+
+def _require_local() -> bool:
+    """Fail-closed switch (env HYGIENE_REQUIRE_LOCAL=1).
+
+    A checkout without the local rule set silently falls back to the generic rules.
+    That is right for a contributor's machine and WRONG for CI: it would report a
+    clean run while enforcing only a fraction of the rules. CI sets this so a missing
+    rule set is an error, not a quiet pass.
+    """
+    return os.environ.get("HYGIENE_REQUIRE_LOCAL", "").strip() in {"1", "true", "yes"}
 
 
 def main() -> int:
@@ -233,15 +254,26 @@ def main() -> int:
     ap.add_argument("--ci-range", metavar="A...B", help="scan lines added in a git range (CI)")
     ap.add_argument("--commit-msg", metavar="FILE", help="scan a commit message file ('-' = stdin)")
     ap.add_argument("--pr-body", metavar="FILE", help="scan a PR description ('-' = stdin) before opening it")
+    ap.add_argument("--quiet-report", action="store_true",
+                    help="report only file:line and a count (for public CI logs)")
     args = ap.parse_args()
 
     if args.commit_msg:
+        # Commit-message rules are all generic; the local set is not needed here.
         hits = scan_commit_msg(args.commit_msg)
     elif args.pr_body:
-        _load_local_rules()
+        if not _load_local_rules() and _require_local():
+            sys.stderr.write(
+                "PUBLIC-HYGIENE GUARD: pattern set unavailable -- refusing to report clean.\n"
+                "The full rule set could not be loaded, so this scan would only be partial.\n")
+            return 2
         hits = scan_pr_body(args.pr_body)
     else:
-        _load_local_rules()
+        if not _load_local_rules() and _require_local():
+            sys.stderr.write(
+                "PUBLIC-HYGIENE GUARD: pattern set unavailable -- refusing to report clean.\n"
+                "The full rule set could not be loaded, so this scan would only be partial.\n")
+            return 2
         if args.all:
             hits = scan_all()
         elif args.ci_range:
@@ -250,12 +282,22 @@ def main() -> int:
             hits = scan_diff(_git(["diff", "--cached", "--unified=0", "--no-color"]))
 
     if hits:
-        sys.stderr.write("PUBLIC-HYGIENE GUARD: blocked %d leak(s)\n\n" % len(hits))
-        for h in hits:
-            sys.stderr.write(h + "\n")
-        sys.stderr.write(
-            "\nFix the line(s) above. If a hit is a verified false positive, add the\n"
-            "marker 'hygiene-allow' to that line.\n")
+        sys.stderr.write(f"PUBLIC-HYGIENE GUARD: blocked {len(hits)} leak(s)\n\n")
+        for location, reason, text in hits:
+            if args.quiet_report:
+                # Locations only. The reason names the rule category and the text is the
+                # match itself -- printing either would echo the rule set into a public log.
+                sys.stderr.write(f"{location}\n")
+            else:
+                sys.stderr.write(f"{location}: {reason}\n    {text}\n")
+        if args.quiet_report:
+            sys.stderr.write(
+                "\nRun the guard locally for the reason and the offending text:\n"
+                "    python scripts/check_public_hygiene.py --all\n")
+        else:
+            sys.stderr.write(
+                "\nFix the line(s) above. If a hit is a verified false positive, add the\n"
+                "marker 'hygiene-allow' to that line.\n")
         return 1
     return 0
 

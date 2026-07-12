@@ -7,7 +7,7 @@
 | **Tarih** | 2026-06-09 |
 | **Kaynak ZIP** | `exsrk2025.zip` (67.5 KB) |
 | **İlişkili RR** | RR-Y1-011 |
-| **Status** | ✅ Şema tamamlandı — Stage-0 kararı Orchestrator+the maintainer'a |
+| **Status** | ✅ Şema tamamlandı — Stage-0 kararı maintainer'a |
 
 ---
 
@@ -171,7 +171,7 @@ Filtre: "endeks" + çeyrek dönemi.
 ### 5.3 Karar
 
 F-2 için **Yol A (KAP arama)** önerilir. Efor yaklaşık 1-2 saatlik yarı-manuel çalışma.
-Bu ayrı bir spec/task olarak ele alınmalıdır.
+Bu ayrı bir task olarak ele alınmalıdır.
 
 ---
 

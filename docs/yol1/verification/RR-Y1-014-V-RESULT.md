@@ -99,7 +99,7 @@ fiyatlanmış).
 `docs/yol1/verification/pead_slice_10events.csv` — 10 olay ham-alanlarıyla. Örnek
 (YKBNK 2019Q1): duyuru 2019-05-03 (Cuma) → giriş **2019-05-07 (Salı, T+2 hafta-sonu-
 duyarlı)**, SUE +0,060 → **TOP**, pencere-getirisi +%35. Tarih-hizalaması, SUE-işaret/
-ölçek, tercile-üyelik **the maintainer-gözüyle doğrulanabilir.** Slice ayrıca insan-kontrolünün
+ölçek, tercile-üyelik **insan-gözüyle doğrulanabilir.** Slice ayrıca insan-kontrolünün
 değerini gösteren kalemler yüzeye-çıkardı (örn. GSRAY off-takvim mali-yılı: 2019Q3
 duyuru-2020-05 — futbol-kulübü Haziran-yıl-sonu; tek-olay, agrega-hizalama A1a/B3/B4
 ile zaten-doğrulandı). *Pencere-getirisi tek-olay insan-checkpoint'idir; agrega-edge

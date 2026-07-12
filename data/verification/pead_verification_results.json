@@ -166,7 +166,7 @@
     "sue_min": -2.37620657,
     "sue_max": 9.70409384,
     "sue_median": 0.0077698,
-    "note": "insan-checkpoint: tarih-hizalamasi (T+2), SUE-isaret/olcek, tercile-uyelik the maintainer-gozuyle-dogrulanabilir; agrega-edge yeniden-olculmedi"
+    "note": "insan-checkpoint: tarih-hizalamasi (T+2), SUE-isaret/olcek, tercile-uyelik insan-gozuyle-dogrulanabilir; agrega-edge yeniden-olculmedi"
   },
   "FAZ5_verdict": {
     "verdict": "TRUSTWORTHY-WITH-CAVEATS",
