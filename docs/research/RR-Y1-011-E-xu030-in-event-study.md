@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-06-09
 **Stage-0:** `docs/yol1/STAGE0_INDEX_RECON_XU030_IN.json` (frozen, pre-registered)
-**Spec:** RR-Y1-011-E (N<=3, count=1)
+**Kapsam:** RR-Y1-011-E (N<=3, count=1)
 **Dayanak:** RR-Y1-011-D §panel (1003 event, 25 XU030-IN), RR-Y1-011-C (PIT-safety)
 
 ---

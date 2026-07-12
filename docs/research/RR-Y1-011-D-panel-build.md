@@ -136,7 +136,7 @@ RR-Y1-011 ham-N: XU100=487, XU030=54 (clean_universe bist100/bist30 flag günlü
 
 ## 6. Stage-0 Ön-Değerlendirmesi
 
-> Bu task Stage-0 AÇMAZ. Kararı Orchestrator + the maintainer verir.
+> Bu task Stage-0 AÇMAZ. Kararı maintainer verir.
 
 | Hücre (Tier×Yön) | Temiz-N | Durum |
 |-----------------|---------|-------|

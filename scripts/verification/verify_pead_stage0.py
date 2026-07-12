@@ -327,7 +327,7 @@ def faz3_placebo(panel, events, signal, wide_real) -> list[dict]:
           "nw_t": nw, "n_obs": r.get("n_obs"),
           "frozen_bar_pass": bool(nw is not None and abs(nw) < NW_T_NULL)}
 
-    # C3 BAR-IHLALI -> spec-gereki: bug-hipotezi-adlandir VEYA non-bug-siniflandir.
+    # C3 BAR-IHLALI -> spec-geregi: bug-hipotezi-adlandir VEYA non-bug-siniflandir.
     # AYIRT-EDICI DIAGNOSTIK (mantik ko-sulmadan-once-yazili, esik-GEVSETILMEDI):
     # pre-event sinyalini olay-yakinligina gore parcala. GERCEK pre-announcement run-up
     # olaya-yaklastikca-GUCLENIR (near >> far); pencere/join-BUG'i bu gradyani gostermez
@@ -424,7 +424,7 @@ def faz4_human_slice(panel, events) -> dict:
             "sue_min": round(float(sue.min()), 8), "sue_max": round(float(sue.max()), 8),
             "sue_median": round(float(sue.median()), 8),
             "note": "insan-checkpoint: tarih-hizalamasi (T+2), SUE-isaret/olcek, tercile-uyelik "
-                    "the maintainer-gozuyle-dogrulanabilir; agrega-edge yeniden-olculmedi"}
+                    "insan-gozuyle-dogrulanabilir; agrega-edge yeniden-olculmedi"}
 
 
 # ---------------------------------------------------------------------------

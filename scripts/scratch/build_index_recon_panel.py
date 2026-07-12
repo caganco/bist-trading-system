@@ -885,7 +885,7 @@ def write_report(disc_map: dict, event_df: pd.DataFrame, cov_stats: dict,
         "",
         "## 6. Stage-0 Ön-Değerlendirmesi",
         "",
-        "> Bu task Stage-0 AÇMAZ. Kararı Orchestrator + the maintainer verir.",
+        "> Bu task Stage-0 AÇMAZ. Kararı maintainer verir.",
         "",
     ]
 

@@ -60,4 +60,4 @@ Bu olaylar rekonstitusyon mekanizmasindan degil, hisse-spesifik guclu-gurultuden
 BIST'te index-inclusion anomalisinin 11-19 gunluk kamuya acik pencerede retail-erisimli olmadigi ampirik olarak teyit edildi. Bu "anlamsiz null" degil; ileri arastirma icin:
 - Kurumsal isinma-suresi analizi (sadece kurumsal erisilebilir pencere: ilan oncesi)
 - KAP-iceriden bilgi akisi sorusu (farkli Stage-0, farkli mekanizma)
-Bu spec bu sorulan acmaz — kapatir.
+Bu calisma bu sorulan acmaz — kapatir.

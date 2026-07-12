@@ -6,7 +6,7 @@ GETIRI HESAPLAMAZ, GETIRI OKUMAZ. Yalniz sinyal-tarafi insa eder:
     olceklenmis: SUE = UE / MV(period_end - 3ay'in takvim-ayi).
     Uygunluk: >= 8 ceyrek onceki-kazanc-gecmisi (qid_t - qid_ilk >= 8).
     NOT (transkripsiyon-cozumu, sonuc-gorulmeden donduruldu): RR-Y1-013/014
-    tablolarindaki "SUE formu" satiri iki specte de "onceki-ceyrek-sonu
+    tablolarindaki "SUE formu" satiri iki spec'te de "onceki-ceyrek-sonu
     mktval'e olceklenmis" der; "8-ceyrek (payda)" satiri trailing-std formunun
     kalintisidir. EN-SPESIFIK ve IKI-KEZ-tekrarlanan tanim (mktval-olcekli) esas
     alindi; 8-ceyrek kosulu gecmis-tabani olarak uygulandi. Trailing-std formu
