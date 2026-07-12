@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 # DEC-015 — Alpha Attribution Infrastructure (Faz 1)
 
 **Status:** Implemented

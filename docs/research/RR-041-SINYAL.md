@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-041 — BIST Swing Trading: Giriş Sinyali Kalitesini Çıkıştan Arınmış ve Look-Ahead'siz Ölçme Metodolojisi
 
 ## TL;DR (terimsiz, 8 madde)

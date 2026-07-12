@@ -3,8 +3,8 @@
 Üretim/günlük operasyonda arıza anında **ne yapılacağı**. Her senaryo:
 **Belirti → Teşhis → Kurtarma** sırasıyla. Komutlar PowerShell içindir.
 
-İlgili dokümanlar: [PRE_COMMIT_SETUP.md](PRE_COMMIT_SETUP.md) ·
-[SIGNAL_ALERT_USAGE.md](SIGNAL_ALERT_USAGE.md)
+İlgili dokümanlar: [PRE_COMMIT_SETUP.md](../PRE_COMMIT_SETUP.md) ·
+[SIGNAL_ALERT_USAGE.md](../SIGNAL_ALERT_USAGE.md)
 
 ---
 
@@ -102,7 +102,7 @@ python scripts/setup_scheduler.py query
       yoksa son fiyat eski mi (uyarı tetiklenmez).
 - [ ] `agents/intelligence/daily_briefing.json` içindeki `alerts` dizisi /
       her pozisyonun `alerts` alanı dolu mu.
-- [ ] Format/kullanım: [SIGNAL_ALERT_USAGE.md](SIGNAL_ALERT_USAGE.md)
+- [ ] Format/kullanım: [SIGNAL_ALERT_USAGE.md](../SIGNAL_ALERT_USAGE.md)
       (ACTION/PRICE/DEADLINE/OVERRIDE alanları).
 - [ ] Drawdown circuit breaker: `logs` içinde "Drawdown alerts" satırı var mı.
 

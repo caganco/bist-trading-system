@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-020: Sentio Veri Kaynakları Haritalama / BIST Data Source Atlas
 
 **Doküman tipi:** Reference / "Rosetta Stone" — arastirma katmani için tablo ağırlıklı atlas

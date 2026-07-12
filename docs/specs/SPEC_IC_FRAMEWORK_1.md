@@ -713,7 +713,7 @@ RR-010 §6 madde 12: Round-trip retail komisyon %0.25-0.40. `net_IC ≈ gross_IC
 D-133 merge edilince `docs/RESEARCH_REGISTRY.md`'de RR-010 satırı şöyle güncellenir:
 
 ```
-| [RR-010](research/RR-010-bist-ic-measurement.md) | IC ölçüm metodolojisi … | 23 May 2026 | D-132/D-133/D-134/D-135/D-136 | ✅ Applied (Faz 1) |
+| [RR-010](../research/RR-010-bist-ic-measurement.md) | IC ölçüm metodolojisi … | 23 May 2026 | D-132/D-133/D-134/D-135/D-136 | ✅ Applied (Faz 1) |
 ```
 
 ---

@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-008 — TCMB EVDS API Migration: evds2 → evds3
 
 **Tarih:** 22 Mayıs 2026  

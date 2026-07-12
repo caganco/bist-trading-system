@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # Sentio L4 Sentiment Katmanı Yeniden Mimarisi — Türkçe Finansal NLP Araştırma Raporu
 
 ## TL;DR

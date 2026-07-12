@@ -235,7 +235,7 @@ Kritik ayrimlar:
 
 | Dosya | Durum |
 |-------|-------|
-| `docs/ARCHITECTURE.md` | v2.0 — guncel (30 Mayis 2026, maintainer tarafindan yazildi) |
+| `docs/guides/ARCHITECTURE.md` | v2.0 — guncel (30 Mayis 2026, maintainer tarafindan yazildi) |
 | `docs/ARCH_V2_PARADIGM_DECISION.md` | Yun karari belgesi, untracked (commit edilmedi) |
 | `docs/PIVOT_ARCHITECTURE_AUDIT.md` | 2026-05-29, Faz 0 oncesi — kismi guncel (Soru 2 liste) |
 | `docs/factor_ic/` | Faz 0 Stage 0 kayitlari + sonuclar, kalici |

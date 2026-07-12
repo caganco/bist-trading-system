@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-018: Sentio Trading System — López de Prado Tabanlı Backtesting Framework
 
 **Versiyon:** 1.0 | **Tarih:** 25 Mayıs 2026 | **Yazan:** Research Agent

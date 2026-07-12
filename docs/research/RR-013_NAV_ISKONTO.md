@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-013: BIST Holding Hisseleri için NAV İskontosu Hesabı ve Mean Reversion Alpha Stratejisi
 
 # GEÇERLİLİK: "Katman A holding faktörü adayı AMA long-only uyarısıyla"

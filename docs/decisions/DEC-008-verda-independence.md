@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 ---
 id: DEC-008
 title: VERDA Independence — L5 Core Decoupled from VERDA Vendor

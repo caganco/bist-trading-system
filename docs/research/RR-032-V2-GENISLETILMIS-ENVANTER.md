@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-032-V2 — BIST Fundamental Veri Kaynakları: Genişletilmiş Envanter
 
 **Tarih:** 30 Mayıs 2026

@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-032 — Faz 0b value Faktörü için BIST Fundamental Veri Envanteri (Fizibilite)
 
 **Tarih:** 25 Mayıs 2026

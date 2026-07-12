@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # CRITIC 2605 — Stratejik Mimari Değerlendirme: Mevcut Durum, Teşhis ve Yol Haritası
 
 **Tarih:** 2026-05-26  

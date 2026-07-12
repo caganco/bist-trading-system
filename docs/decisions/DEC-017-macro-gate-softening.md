@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 # DEC-017 — Macro Gate Softening (CDS Percentile Overlay)
 
 **Status:** Implemented

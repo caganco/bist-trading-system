@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # BIST Slippage ve Market Impact Modellemesi: Ham Araştırma Bulguları
 
 ## TL;DR

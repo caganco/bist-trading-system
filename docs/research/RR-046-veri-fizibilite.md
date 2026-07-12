@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-046 — PEAD + MAKRO-EVENT Veri-Edinim FİZİBİLİTE (Yön-A, AŞAMA-1)
 
 **Tür:** VERİ-FİZİBİLİTE-PROB (edge-test-DEĞİL, ölçüm-DEĞİL, Stage-0-gerekmez).

@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 # DEC-013 — L5 Progressive Confidence Ramp
 
 **Tarih:** 2026-05-19

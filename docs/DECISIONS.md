@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 # Architecture Decision Log
 
 **System:** BIST Trading OS v5.0  
@@ -171,7 +173,7 @@ Tests: +N passing"
 
 ## RELATED DOCUMENTATION
 
-- `docs/ARCHITECTURE.md` – System architecture (v3.0)
+- `docs/guides/ARCHITECTURE.md` – System architecture (v3.0)
 - `docs/RESEARCH_REGISTRY.md` – Research report index
 
 ---

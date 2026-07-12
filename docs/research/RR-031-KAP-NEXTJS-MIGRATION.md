@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-031 — KAP Next.js Migration: Scraping Infeasibility
 
 **Tarih:** 28 Mayıs 2026

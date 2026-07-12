@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-044: NAV-İskonto Paradigması — VERİ-FİZİBİLİTE Turu (test-DEĞİL)
 
 **Tür:** ARAŞTIRMA / FİZİBİLİTE (ölçüm-değil, edge-test-değil, Stage-0 gerekmez)

@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-036 — TMS 29 BIST İlk Uygulama Tarihi + Öncesi Çeyrek Disiplini (D-183a)
 
 **Tarih:** 30 Mayıs 2026

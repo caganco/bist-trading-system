@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-021 — EVDS3 Canlı Test Sonuçları
 
 **Test zamanı:** 2026-05-25 19:55 UTC  

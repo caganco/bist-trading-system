@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-037 — Smart Money Veri-Erisim + Kalite Dogrulama (Faz 0c On-kosulu)
 
 **Tarih:** 30 Mayis 2026

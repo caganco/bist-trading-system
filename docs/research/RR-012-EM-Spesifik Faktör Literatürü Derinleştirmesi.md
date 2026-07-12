@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-012: Sentio Trading System — 14 EM/BIST-Spesifik Faktör Literatür Derinleştirmesi ve İmplementasyon Fizibilite Analizi
 
 **Rapor No:** RR-012  

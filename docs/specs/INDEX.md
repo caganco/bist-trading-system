@@ -313,13 +313,13 @@
 - `SPEC_KELLY_1.md` (new proposal, version 1)
 - `SPEC_SENTIMENT_NLP_2.md` (revised proposal, version 2)
 
-**Location:** `docs/SPECS/` directory
+**Location:** `docs/specs/` directory
 
 ---
 
 ## HOW TO ADD A NEW SPEC
 
-1. **Create file:** `docs/SPECS/SPEC_[ID].md`
+1. **Create file:** `docs/specs/SPEC_[ID].md`
 2. **Write SPEC:** Use the SPEC template
 3. **Update this INDEX:** Add row to table above
 4. **Validate:** Ensure no contradictions with existing SPECs

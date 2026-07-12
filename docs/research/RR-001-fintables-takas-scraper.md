@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # BIST Takas/Saklama Verisi ile Smart Money Sinyal Üretimi — Kapsamlı Araştırma Raporu
 
 ## TL;DR

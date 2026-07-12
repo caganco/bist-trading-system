@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # Modern Borsa İstanbul (2019–2026) Davranış Rejimi: Sistematik Swing/Pozisyon Ticaret Sistemi İçin Kanıt Haritası
 
 *Bu rapor bir kanıt-haritalama çalışmasıdır; yatırım tavsiyesi veya görüş yazısı DEĞİLDİR. Bireysel, uzun-yönlü (long-only), tek kişilik, ~5.500 USD sermayeli bir yatırımcının sistem TASARIMINI bilgilendirmek amacıyla hazırlanmıştır. Kanıt zayıf veya yoksa "yetersiz kanıt / belirsiz" denmiş, boşluklar spekülasyonla doldurulmamıştır.*

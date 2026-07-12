@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # BIST Algoritmik Trading: Linear Additive Composite Ötesinde 4 Kurumsal Alternatif — Bulgu Raporu
 
 ## TL;DR
