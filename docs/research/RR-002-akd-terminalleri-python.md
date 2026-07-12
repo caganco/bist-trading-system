@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # BIST Takas ve Aracı Kurum Dağılımı Verisi Sağlayan Türk Veri Terminalleri — Python Entegrasyonu Karşılaştırması
 
 ## TL;DR

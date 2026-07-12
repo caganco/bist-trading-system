@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-045 — FON-NAV-ARB Veri-Edinim FİZİBİLİTE (ETF/CEF iskonto, holding-DEĞİL)
 
 **Tür:** ARAŞTIRMA / FİZİBİLİTE + veri-edinim-planı (ölçüm-DEĞİL, edge-test-DEĞİL).

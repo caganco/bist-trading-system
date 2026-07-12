@@ -116,10 +116,14 @@ sentio/
 ├── tests/             2,088 tests: unit · integration · architecture invariants · hygiene
 ├── examples/rry1008/  red-team scripts: graveyard-factor + adversarial overfit probe
 ├── docs/
+│   ├── README.md      documentation guide: what lives where, and why
+│   ├── adr/           architecture decision records (immutable once accepted)
 │   ├── research/      research reports (RR-xxx, D-xxx, NRR-xxx)
-│   ├── RESEARCH_REGISTRY.md   master index of all research reports
-│   ├── DECISIONS.md           architecture decision log
-│   └── ARCHITECTURE.md        system architecture
+│   ├── yol1/          pre-registrations, results, graveyard
+│   ├── specs/         component specifications
+│   ├── guides/        operational guides (runbook, architecture, how-tos)
+│   ├── disciplines.md research disciplines register (DISC-xx)
+│   └── RESEARCH_REGISTRY.md   master index of all research reports
 ├── scripts/           daily_update.py, health_check.py, build_clean_universe.py
 ├── config.yaml        runtime config (universe, scanner parameters)
 └── pyproject.toml     tool config (mypy, ruff, import-linter contracts)
@@ -181,7 +185,7 @@ Stated up front rather than left to be discovered:
 
 - [Operator guide](docs/engine/OPERATOR_GUIDE.md): attach a signal, write a Stage-0, read the output vector
 - [Research registry](docs/RESEARCH_REGISTRY.md): every directive and its verdict
-- [Architecture](docs/ARCHITECTURE.md) and [decision log](docs/DECISIONS.md)
+- [Architecture](docs/guides/ARCHITECTURE.md) and [decision log](docs/DECISIONS.md)
 - [ballast-bist](https://github.com/caganco/ballast-bist): the deployed smart-passive anchor
 
 ---

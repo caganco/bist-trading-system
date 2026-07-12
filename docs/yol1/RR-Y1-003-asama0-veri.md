@@ -18,7 +18,7 @@ Kaynak konum (mutlak-yol commit edilmez; placeholder):
 - Lokal `.env` dosyasinda **EVDS_API_KEY YOK** (mevcut, 46 byte, EVDS satiri 0).
   -> Bu prob, EVDS'ye **CANLI otonom test-pull YAPAMADI** (auth imkansiz).
 - ANCAK ayni kod-tabaninda **onceden-calistirilmis canli bir EVDS testi** mevcut:
-  `scripts/test_evds3_connection.py` -> `docs/research/RR-021-live-test-results.md`
+  `scripts/test_evds3_connection.py` -> `docs/research/RR-021b-live-test-results.md`
   (test zamani **2026-05-25 19:55 UTC**, o-an-gecerli bir key ile, auth header='key', HTTP 200).
   Asagidaki "CONFIRMED-ACTIVE" damgalari **o testten** gelir (kod gercekten-veri-donuyor kanit).
 - ONEMLI NITELIK: RR-021 testi **400-gunluk lookback** kullandi -> yalniz SON-VERI + recency

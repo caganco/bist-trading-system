@@ -62,14 +62,14 @@ Entries are reverse-chronological. Research verdicts link to full reports in `do
 | [D-206](docs/research/D-206-rapor.md) NAV discount Z-score mean reversion | SERAP — pooled FE-within beta wrong sign (−0.0185); Driscoll-Kraay \|t\| = −0.81. |
 | [NRR-007](docs/research/NRR-007-rapor.md) lowvol63 isolated | ELIMINATED — liquidity premium, not anomaly; gate-4 collapse in liquid universe. |
 | [NRR-008](docs/research/NRR-008-rapor.md) Value regime-gated (3rd and final) | ELIMINATED — regime gating did not rescue value. Value thread closed (N≤3 rule). |
-| [D-Y1-001](docs/research/D-Y1-001-rapor.md) Value regime-resilience | FRAGILE / REGIME-DEPENDENT — P/B passes 4/4 periods mechanically; E/P fails; OOS collapses. |
+| [D-Y1-001](docs/research/D-Y1-001-value-only-rapor.md) Value regime-resilience | FRAGILE / REGIME-DEPENDENT — P/B passes 4/4 periods mechanically; E/P fails; OOS collapses. |
 
 ### Research — timing signals
 | Report | Verdict |
 |--------|---------|
-| [D-185](docs/research/D-185-rapor.md) Trend motor | DISCREDITED (DEC-044) — gross DD ~99% artefact. |
-| [D-186](docs/research/D-186-rapor.md) Trend entry-timing | Entry-timing does not beat fair null at 95th pctile. |
-| [D-187](docs/research/D-187-rapor.md) Exposure backtest / honest benchmark | Active timing real −5.7%; random-null pctile 0.17. Static barbell superior. |
+| [D-185](docs/research/D-185-trend-test-rapor.md) Trend motor | DISCREDITED (DEC-044) — gross DD ~99% artefact. |
+| [D-186](docs/research/D-186-trend-duzeltme-rapor.md) Trend entry-timing | Entry-timing does not beat fair null at 95th pctile. |
+| [D-187](docs/research/D-187-exposure-rapor.md) Exposure backtest / honest benchmark | Active timing real −5.7%; random-null pctile 0.17. Static barbell superior. |
 
 ### Engine — foundation
 - **RR-Y1-005 validation engine:** Mod-A (name-split conjugate) + Mod-B (temporal CPCV)

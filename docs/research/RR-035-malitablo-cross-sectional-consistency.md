@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-035 — MaliTablo Cross-Sectional Tutarlılık Testi (D-182)
 
 **Tarih:** 30 Mayıs 2026

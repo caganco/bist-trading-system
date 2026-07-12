@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-034 — İş Yatırım USD-Bazlı Value Fizibilite Kontrolü (D-180)
 
 **Tarih:** 30 Mayıs 2026

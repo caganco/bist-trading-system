@@ -2,7 +2,7 @@
 
 Probes every series code listed in RR-021 against the live TCMB EVDS3 API,
 records active/dead status + last observation date, and writes a markdown
-report to docs/research/RR-021-live-test-results.md.
+report to docs/research/RR-021b-live-test-results.md.
 
 Usage:
     python scripts/test_evds3_connection.py
@@ -35,7 +35,7 @@ from dotenv import load_dotenv
 _BASE_URL = "https://evds3.tcmb.gov.tr/igmevdsms-dis/"
 _TIMEOUT = 15
 _LOOKBACK_DAYS = 400  # wide enough to guarantee data for monthly/weekly series
-_REPORT_PATH = Path(__file__).resolve().parents[1] / "docs" / "research" / "RR-021-live-test-results.md"
+_REPORT_PATH = Path(__file__).resolve().parents[1] / "docs" / "research" / "RR-021b-live-test-results.md"
 _PROBE_SERIES = "TP.DK.USD.A"  # known-good series used for auth-header detection
 
 

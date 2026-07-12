@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-017 · HMM Regime Detection — BIST Kalibrasyon ve Aktivasyon Roadmap
 
 # GEÇERLİLİK: "Katman D rejim TESPİTİ için (ama "weight override" kısmı ÖLÜ)"

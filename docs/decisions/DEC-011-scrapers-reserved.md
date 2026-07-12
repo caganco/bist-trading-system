@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 ---
 id: DEC-011
 title: src/scrapers/ — Financial-Statement Parser Intentionally Preserved (Not Wired)

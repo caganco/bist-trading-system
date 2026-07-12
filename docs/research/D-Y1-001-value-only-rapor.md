@@ -1,3 +1,5 @@
+> STATUS: needs-review (classification unresolved; see the reconciliation report).
+
 # D-Y1-001 -- Value-only Tilt REJIM-DAYANIKLILIK Testi Raporu (Yol-1 Asama-1)
 
 **VERDICT (DEC-Y1): KIRILGAN / REJIM-BAGIMLI.** Frozen 4-kapili kural birincil metrik (P/B = defter/piyasa) uzerinde mekanik olarak GECER (4/4 kapi), ANCAK robustluk-metrigi (E/P) GECMEZ (gate-1 + gate-4 duser, 2-yol rejim-hizalamasi AYRISIK=KIRILGAN) ve birincil metrigin kendisi out-of-sample cokuyor. Toplam kanit: prim **2019-2022 yuksek-enflasyon surgesine yogunlasmis, kararli-rejim-bagimsiz bir prim DEGIL**. Yol-2 overlay'ine hizli-gecis ONERILMEZ; nihai karar maintainer (DEC-039).

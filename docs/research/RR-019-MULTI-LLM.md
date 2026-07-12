@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 ---
 report_id: RR-019
 title: "Multi-LLM Orchestration — Sentio İçin AI Jüri Sistemi"

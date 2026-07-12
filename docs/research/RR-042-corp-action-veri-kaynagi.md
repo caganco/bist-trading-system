@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-042 — Corp-Action Veri-Kaynağı Geniş Araştırması (NRR-004 + Faz-2 KAP probe)
 
 **Tür:** ARAŞTIRMA (read-only API probe + envanter). **Tarih:** 2 Haziran 2026 (Faz-1 + Faz-2).

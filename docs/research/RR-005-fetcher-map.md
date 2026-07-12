@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-005: BIST Veri Kaynakları Fetcher Haritası — robots.txt / auth / format / rate-limit / ToS
 
 > **Tip:** Operasyonel fetcher haritası (scraping mekaniği).

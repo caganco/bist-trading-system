@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 ---
 id: DEC-010
 title: Strategist Advisory Boundary — LLM Output is Read-Only Narrative

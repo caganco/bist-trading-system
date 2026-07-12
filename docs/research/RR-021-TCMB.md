@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-021 — TCMB EVDS3 API Operasyonel Referans
 
 **Sistem:** Sentio Trading System · **Snapshot:** Mayıs 2026 · **Önceki:** RR-009 (seri kod mapping), D-135/D-136 (evds2 → evds3 migration)
@@ -104,7 +106,7 @@ Türk quant community'sinde EVDS, Python tarafında üç paket etrafında konsol
 
 > **Canlı Doğrulama:** Bu envanter `scripts/test_evds3_connection.py` 
 > ile 25-05-2026 tarihinde API'ye karşı test edildi.  
-> Sonuçlar: `docs/research/RR-021-live-test-results.md`  
+> Sonuçlar: `docs/research/RR-021b-live-test-results.md`  
 > **Özet:** 14/16 aktif, 2 dead (TP.FAIZ.PYUVDL, TP.FG01)
 
 ### 3.1 Politika Faizi & Para Piyasası

@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-039: Kural-Tabanlı Teknik Analiz Araştırması — Görsel Sezgiyi Makine-Hesaplanabilir Kurala Çevirmek (BIST, swing/long)
 
 ## 1. TL;DR (sade dil)

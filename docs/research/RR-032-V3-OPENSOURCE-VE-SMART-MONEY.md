@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-032-V3 — Açık-Kaynak Repo İzleme + Smart Money Veri Kanalları
 
 **Tarih:** 30 Mayıs 2026

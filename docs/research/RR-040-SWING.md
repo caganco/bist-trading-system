@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # BIST Algoritmik Swing-Trading Sistemi: Üç Hipotezin Temellerine Yönelik Derin Araştırma
 
 ## TL;DR (jargonsuz, 7 madde)

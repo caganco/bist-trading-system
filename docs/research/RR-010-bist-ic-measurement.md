@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED-LINEAGE (written against an earlier architecture). Retained for history; not current.
+
 # RR-010: Sentio Trading System — Information Coefficient (IC) Ölçüm Metodolojisi
 
 **Versiyon:** 1.0 | **Tarih:** 23 Mayıs 2026 | **Hedef dosya:** `docs/research/RR-010-bist-ic-measurement.md`

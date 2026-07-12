@@ -1,3 +1,5 @@
+> CLASS: data-feasibility (architecture-independent). Active reference where cited.
+
 # RR-033 — İş Yatırım Screener TMS 29 Uyum Testi (Veri Kalitesi Doğrulama)
 
 **Tarih:** 25 Mayıs 2026

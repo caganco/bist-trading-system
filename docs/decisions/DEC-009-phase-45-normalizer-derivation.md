@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 ---
 id: DEC-009
 title: Phase 4.5 Normalizer — Emergent 0.78 Floor, Not a Hardcoded Divisor

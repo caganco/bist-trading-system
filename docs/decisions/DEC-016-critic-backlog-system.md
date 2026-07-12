@@ -1,3 +1,5 @@
+> STATUS: SUPERSEDED by ADR discipline (docs/adr/). Retained for history.
+
 ---
 id: DEC-016
 title: Critic Backlog System — Persistent Memory for Strategic Findings
