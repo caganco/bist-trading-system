@@ -30,6 +30,17 @@ jobs:
           python -m pytest tests/test_architecture.py \
             -q --tb=short
 
+      # Lives in this job on purpose: "Tier 1 — Architecture Tests" is a required status
+      # check, so a violation blocks the merge. A separate job would run and report, but
+      # would not block until it was also added to branch protection.
+      # --check verifies against the committed lock and never writes it; the lock is part
+      # of the change, not something CI produces.
+      - name: ADR immutability guard
+        run: python tools/adr_guard.py --check
+
+      - name: ADR guard tests
+        run: python -m pytest tests/test_adr_guard.py -q --tb=short
+
   import-linter:
     name: "Architecture — import-linter"
     runs-on: ubuntu-latest
