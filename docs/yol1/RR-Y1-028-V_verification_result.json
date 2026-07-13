@@ -1,0 +1,111 @@
+{
+  "id": "RR-Y1-028-V -- verification result",
+  "plan": "docs/yol1/RR-Y1-028-V_verification_plan.json (frozen BEFORE any check ran)",
+  "tests": "tests/test_rr_y1_028_verification.py",
+  "date": "2026-07-13",
+  "totals": {"checks_run": 34, "passed": 34, "failed": 0, "mutations_that_killed_their_check": 5},
+
+  "VERDICT": "TRUSTWORTHY-WITH-CAVEATS",
+  "verdict_basis": "Every check passed AND every mutation killed the check it was aimed at. No fix's PASS rests on a blind test. Two limitations could not be verified away and are listed below; neither is a failed check.",
+
+  "governing_principle_applied": "A fix's PASS is not evidence unless deliberately breaking the fix makes the check FAIL. Five mutations were run; each one turned its check red, so each check is demonstrably sensitive to the defect it guards.",
+
+  "D2_annualization": {
+    "verdict": "VERIFIED",
+    "checks": {
+      "D2_1 metamorphic h-invariance": {
+        "relation": "active.mean() ~ h*mu_1, so gross_ann = active.mean()*(252/h) ~ 252*mu_1 -- INDEPENDENT of h. The old code's *252 gives ~252*h*mu_1, i.e. PROPORTIONAL to h.",
+        "directive_formula_corrected": "The task text said 'gross_ann x h ~ constant', which would mean gross_ann ~ 1/h -- neither the old nor the new behaviour. The parenthetical in the same line ('h-invaryant olmali') is the correct statement and is what was tested. Derivation is in the frozen plan.",
+        "result": "|gross_active_ann| varies by < 1.25x across h in {1,5,10,21,63}. PASS.",
+        "MUTATION": "_annualizer -> lambda yr,h: yr (the bug). Spread then EXCEEDS 10x. The check is NOT blind."
+      },
+      "D2_3 positive-control FOR THE BUG": {
+        "result": "under the mutation, gross_ann(h)/gross_ann(1) lands within 20% of h for h in {5,21}. The defect is real and h-proportional -- the fix is not fixing nothing.",
+        "why_this_matters": "Without it, 'the fix works' could be true of a bug that never existed."
+      },
+      "D2_2 h=1 byte-identity": {
+        "result": "gross_active_ann at h=1 == active.mean()*252 EXACTLY (float ==, not approx). Zero regression proven as an identity, not a tolerance."
+      },
+      "D2_4 HAC bandwidth": {
+        "a": "nw_lag_for(DAILY, h) == 5 / 21 / 63 at h = 1 / 21 / 63; an explicit nw_lag still wins.",
+        "b": "on the SAME 21-day overlapping series, |t(lag=21)| < |t(lag=5)| -- a too-narrow bandwidth does inflate t, which is the reason the widening is needed.",
+        "c_MUTATION": "forcing nw_lag_for to ignore h CHANGES the harness's emitted nw_t (and inflates it). So the widening is actually WIRED INTO _returns_cost, not merely available on the dial."
+      }
+    }
+  },
+
+  "D3_benchmark_floor": {
+    "verdict": "VERIFIED",
+    "checks": {
+      "D3_0 guard-on-the-guard (added after the first run reported its own blindness)": {
+        "what_happened": "The FIRST version of the D3 checks used a drift-free synthetic panel. Both D3_1 and D3_2 came back VACUOUS: with an EW benchmark returning ~0.5%/yr against 20% CPI, the strategy loses to inflation under BOTH gates, so beats_benchmark_floor never moved and total ~ spread. The checks FAILED rather than passing silently -- the protocol worked as intended.",
+        "fix_to_the_TEST_not_the_code": "A second fixture was built where the BENCHMARK ITSELF clears the floor (~35%/yr drift vs 20% CPI), so the two gates CAN disagree. D3_0 now asserts that precondition explicitly, so no future panel change can make D3_1 silently vacuous again.",
+        "note": "No production code was touched in response. The defect was in the instrument of verification."
+      },
+      "D3_1 isolation differential": {
+        "result": "shipped vs OLD-floor-monkeypatched harness on the same panel/signal: the ONLY field that moved is on the floor path (beats_benchmark_floor False->True, plus real_total_ann). gross_active_ann, net_active_ann, cost_ann, nw_t, n_obs are IDENTICAL. The fix did not leak outside the gate.",
+        "non_vacuity": "asserted that the verdict actually moved (old=False, new=True), so the isolation claim is not made on a case where nothing happened."
+      },
+      "D3_2 mechanical (code-path, not a claim)": {
+        "result": "a spy on benchmark_floor records the argument the harness ACTUALLY passes: it equals benchmark_ew_ann + net_active_ann, and NOT net_active_ann. On the growth bed the two differ by > 5pp, so the assertion can distinguish them."
+      },
+      "D3_3 sanity grid (3 tilts x 3 CPI)": {
+        "grid": "tilt {+5%, +10%, -5%} x CPI {20%, 38%, 60%}, EW benchmark set 20pp above CPI.",
+        "old_gate": "FAILS all 9 cells -- it judged the tilt alone, and no few-percent tilt out-runs inflation. The bug is PROVEN to reproduce, not assumed.",
+        "new_gate": "PASSES all 9 -- because the STRATEGY's total return does clear the floor. Note the -5% tilt also passes: the strategy beat inflation even though the tilt subtracted from it, which is exactly the semantics the fix restores.",
+        "anti_rubber_stamp": "a separate cell where the TOTAL trails inflation (40% total vs 60% CPI, on a large +30% tilt) still FAILS. The corrected gate is not a rubber stamp."
+      },
+      "D3_4 strangler / legacy field": {
+        "result": "BenchmarkFloor.real_active_ann == (1+net_active)/(1+TUFE)-1 EXACTLY -- the pre-fix quantity, byte-preserved. It is NOT equal to real_total_ann (in the test case they have opposite signs), so the old name was not quietly repointed at the new number. Old callers are not broken."
+      }
+    }
+  },
+
+  "D1d_tri_state": {
+    "verdict": "VERIFIED -- including the dangerous direction",
+    "checks": {
+      "D1d_1 three paths": "measured+pass -> KEEP; measured+fail -> DROP; unmeasured -> INCONCLUSIVE.",
+      "D1d_2a NEGATIVE CONTROL (the critical one)": {
+        "rationale": "The risk of D1d is not that it fails to spare unmeasured gates -- it is that, in doing so, it LAUNDERS REAL NEGATIVES into INCONCLUSIVE, so failing candidates stop failing.",
+        "result": "a measured FAIL injected on EVERY keep-bar condition, one at a time (agreement_pass, pbo, dsr, net_active_ann, beats_benchmark_floor) and all at once -- every case still yields DROP, and the condition appears in `failed`, never in `not_measured`."
+      },
+      "D1d_2b precedence": "a real FAIL alongside an UNMEASURED gate still yields DROP. A genuine failure stays decisive; it is not softened to INCONCLUSIVE by the presence of a missing measurement.",
+      "D1d_2 MUTATION": "keep_bar._tri forced to return NOT_MEASURED unconditionally (i.e. the laundering bug itself). EVERY negative control above turns red, and a measured FAIL then reports INCONCLUSIVE -- precisely the failure mode being guarded. So the controls are sensitive, not decorative."
+    }
+  },
+
+  "D1abc_eligibility": {
+    "verdict": "VERIFIED -- and the report's attribution claim is CONFIRMED, not assumed",
+    "attribution_counts_on_the_real_panel": {
+      "old_rule": 38,
+      "coverage_relaxation_alone": 43,
+      "tradability_floor_alone": 72,
+      "shipped_calibration": 231,
+      "needed_for_two_arms": 100
+    },
+    "reading": "This check was written so that it COULD disconfirm the merged RR-Y1-028 report, which claims 'each filter is independently below the bar, so fixing one alone would not have helped'. It does not: 43 < 100 and 72 < 100. Neither single change would have unblocked Mod-A. The claim stands on measurement.",
+    "floor_is_load_bearing": "dropping the floor to ~0 admits strictly more names, so the tradability anchor excludes real candidates -- it is not decoration.",
+    "deflator_direction_MUTATION": "inverting the CPI deflator (scaling EARLY turnover DOWN instead of up) shrinks the pool from 231 to 82 -- below even the 100 needed. The direction is load-bearing; had it been inverted in production, the calibration would have FAILED its own pre-registered success condition."
+  },
+
+  "CAVEATS_could_not_be_verified_away": [
+    {
+      "id": "look-ahead in the eligible-universe definition",
+      "statement": "Mod-A eligibility is computed over the FULL evaluation window [d0, d1] -- it always was (the pre-existing continuous_basket(d0, d1, min_cov=1.0) already did this), and RR-Y1-028 extends that window-wide selection from continuity to liquidity as well. In the strict sense this is look-ahead with respect to d0.",
+      "why_it_is_not_a_failed_check": "It is applied symmetrically to both arms and uses NO return data, so it cannot by itself manufacture a conjugate agreement. It is a property of Mod-A's design (a name-split for a conjugate test, not a tradeable backtest), not a defect introduced here.",
+      "honest_residual": "It could still induce a mild selection effect (names that only became liquid late are admitted for the whole window). This was NOT verified away and should be weighed before any Mod-A result is used to promote a candidate."
+    },
+    {
+      "id": "no external positive-control for the engine as a whole",
+      "statement": "There is no market/period where this engine's verdicts are independently known to be correct. Every differential check here is against the engine's OWN pre-fix behaviour.",
+      "consequence": "These checks establish that the four fixes do what they claim. They do NOT establish that the surrounding engine (the conjugate statistic, the CSCV PBO, the DSR) is correctly computed -- that is RR-Y1-005's own validation surface, and it is out of scope here."
+    },
+    {
+      "id": "the newly-executable Mod-A leg's OUTPUT is not verified",
+      "statement": "D1a/b/c is verified to make the leg EXECUTABLE and to define eligibility as specified. Whether the numbers the leg now emits (agreement t, sign-consistency, real CSCV PBO) are themselves correct was not tested here.",
+      "flag": "The calibration run reported pbo = 0.0 EXACTLY on its first real execution. Plausible for a strongly persistent style factor, but an exact zero on a first-ever run is the kind of number that deserves its own verification before anyone leans on it."
+    }
+  ],
+
+  "what_this_verification_does_NOT_license": "Nothing here revives, reopens or re-adjudicates any candidate. The verified object is the INSTRUMENT. In particular the D3 impact scan's finding (0 recorded verdicts contaminated) is unaffected: every keep-bar in the blast radius was decided on NW-t, which none of these four fixes touches."
+}
