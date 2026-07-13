@@ -28,7 +28,25 @@ import requests
 
 HERE = Path(__file__).resolve().parent
 OUT = Path(__file__).resolve().parents[2] / "docs" / "yol3" / "raw"
-UA = {"User-Agent": "sentio-research cagancebeci78@gmail.com"}
+
+
+def sec_ua() -> dict[str, str]:
+    """SEC fair-access policy requires a contact address in the User-Agent.
+
+    Read from the environment, never committed. Unset -> fail loudly: a request without a
+    contact is throttled or blocked by SEC, and a silently-degraded header would turn that
+    into an unexplained empty result.
+    """
+    contact = os.environ.get("SEC_CONTACT_EMAIL", "").strip()
+    if not contact:
+        raise SystemExit(
+            "SEC_CONTACT_EMAIL is not set. SEC EDGAR requires a contact address in the "
+            "User-Agent (fair-access policy). Set it in .env -- see .env.example."
+        )
+    return {"User-Agent": f"sentio-research {contact}"}
+
+
+UA = sec_ua()
 
 # A wider net than the first pass: five delisted names PLUS three ordinary listed micro/small caps,
 # because a restatement is a normal-company event and the failed names have sparse XBRL.
