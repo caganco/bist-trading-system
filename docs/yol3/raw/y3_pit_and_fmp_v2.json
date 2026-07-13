@@ -1,0 +1,484 @@
+{
+  "id": "RR-Y3-001 part 2 -- corrected EDGAR PIT detection + FMP new-API probe",
+  "self_corrections": {
+    "edgar_grouping": "first pass grouped facts by (fy, fp) and found ZERO restatements. That key is wrong: in companyfacts, fy/fp describe the FILING, not the fact's period, so the original and the re-report of the same quarter land in DIFFERENT groups and can never be compared. Regrouped on the economic period (tag, start, end).",
+    "fmp_v3": "every v3 endpoint returned HTTP 403: 'Legacy Endpoint ... only available for legacy users with valid subscriptions prior August 31, 2025'. The key in .env does not reach v3. The /stable/ API is probed below rather than assumed."
+  },
+  "EDGAR_restatement_scan": {
+    "INFINITY PHARMACEUTICALS (delisted)": {
+      "http": 200,
+      "n_periods_reported_more_than_once": 272,
+      "n_periods_with_CONFLICTING_values": 22,
+      "restatement_rate": 0.0809,
+      "examples": [
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2010-01-01",
+            "end": "2010-12-31"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2012-03-13",
+            "form": "10-K",
+            "accn": "0001193125-12-111977",
+            "val": -48983659
+          },
+          "as_LATER_reported": {
+            "filed": "2013-03-05",
+            "form": "10-K",
+            "accn": "0001193125-13-091650",
+            "val": -48984000
+          },
+          "delta": -341,
+          "delta_pct": -0.0
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2011-01-01",
+            "end": "2011-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2011-08-09",
+            "form": "10-Q",
+            "accn": "0001193125-11-216464",
+            "val": -14036536
+          },
+          "as_LATER_reported": {
+            "filed": "2012-08-07",
+            "form": "10-Q",
+            "accn": "0001193125-12-339352",
+            "val": -14037000
+          },
+          "delta": -464,
+          "delta_pct": -0.0
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2011-04-01",
+            "end": "2011-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2011-08-09",
+            "form": "10-Q",
+            "accn": "0001193125-11-216464",
+            "val": -11729991
+          },
+          "as_LATER_reported": {
+            "filed": "2013-03-05",
+            "form": "10-K",
+            "accn": "0001193125-13-091650",
+            "val": -11730000
+          },
+          "delta": -9,
+          "delta_pct": -0.0
+        }
+      ]
+    },
+    "Airspan Networks (delisted)": {
+      "http": 200,
+      "n_periods_reported_more_than_once": 57,
+      "n_periods_with_CONFLICTING_values": 15,
+      "restatement_rate": 0.2632,
+      "examples": [
+        {
+          "tag": "Revenues",
+          "period": {
+            "start": "2020-01-01",
+            "end": "2020-09-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2021-11-12",
+            "form": "10-Q",
+            "accn": "0001829126-21-014189",
+            "val": 91409000
+          },
+          "as_LATER_reported": {
+            "filed": "2022-04-08",
+            "form": "10-K",
+            "accn": "0001829126-22-007958",
+            "val": 172955000
+          },
+          "delta": 81546000,
+          "delta_pct": 89.21
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2020-08-20",
+            "end": "2020-12-31"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2021-03-31",
+            "form": "10-K",
+            "accn": "0001829126-21-002055",
+            "val": -202686
+          },
+          "as_LATER_reported": {
+            "filed": "2021-05-14",
+            "form": "10-K/A",
+            "accn": "0001829126-21-003918",
+            "val": 4092424
+          },
+          "delta": 4295110,
+          "delta_pct": 2119.1
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2021-01-01",
+            "end": "2021-03-31"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2021-05-18",
+            "form": "10-Q",
+            "accn": "0001829126-21-004035",
+            "val": 3043204
+          },
+          "as_LATER_reported": {
+            "filed": "2022-11-09",
+            "form": "10-Q",
+            "accn": "0001829126-22-019069",
+            "val": -13549000
+          },
+          "delta": -16592204,
+          "delta_pct": -545.22
+        }
+      ]
+    },
+    "Aridis Pharmaceuticals (delisted)": {
+      "http": 200,
+      "n_periods_reported_more_than_once": 109,
+      "n_periods_with_CONFLICTING_values": 11,
+      "restatement_rate": 0.1009,
+      "examples": [
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2022-01-01",
+            "end": "2022-03-31"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2022-05-16",
+            "form": "10-Q",
+            "accn": "0001104659-22-061404",
+            "val": -7766000
+          },
+          "as_LATER_reported": {
+            "filed": "2023-06-08",
+            "form": "10-Q",
+            "accn": "0001493152-23-020599",
+            "val": -7766000
+          },
+          "delta": 0,
+          "delta_pct": 0.0
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2022-01-01",
+            "end": "2022-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2022-08-16",
+            "form": "10-Q",
+            "accn": "0001493152-22-023089",
+            "val": -15745000
+          },
+          "as_LATER_reported": {
+            "filed": "2023-09-14",
+            "form": "10-Q",
+            "accn": "0001493152-23-032540",
+            "val": -15745000
+          },
+          "delta": 0,
+          "delta_pct": 0.0
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2022-04-01",
+            "end": "2022-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2022-08-16",
+            "form": "10-Q",
+            "accn": "0001493152-22-023089",
+            "val": -7979000
+          },
+          "as_LATER_reported": {
+            "filed": "2023-09-14",
+            "form": "10-Q",
+            "accn": "0001493152-23-032540",
+            "val": -7979000
+          },
+          "delta": 0,
+          "delta_pct": 0.0
+        }
+      ]
+    },
+    "Rubicon Technologies (delisted)": {
+      "http": 200,
+      "n_periods_reported_more_than_once": 45,
+      "n_periods_with_CONFLICTING_values": 23,
+      "restatement_rate": 0.5111,
+      "examples": [
+        {
+          "tag": "Revenues",
+          "period": {
+            "start": "2023-01-01",
+            "end": "2023-03-31"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2023-05-22",
+            "form": "10-Q",
+            "accn": "0001829126-23-003671",
+            "val": 181098000
+          },
+          "as_LATER_reported": {
+            "filed": "2024-05-20",
+            "form": "10-Q",
+            "accn": "0001829126-24-003560",
+            "val": 179057000
+          },
+          "delta": -2041000,
+          "delta_pct": -1.13
+        },
+        {
+          "tag": "Revenues",
+          "period": {
+            "start": "2023-01-01",
+            "end": "2023-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2023-08-11",
+            "form": "10-Q",
+            "accn": "0001829126-23-005353",
+            "val": 355662000
+          },
+          "as_LATER_reported": {
+            "filed": "2024-08-21",
+            "form": "10-Q",
+            "accn": "0001829126-24-005700",
+            "val": 351006000
+          },
+          "delta": -4656000,
+          "delta_pct": -1.31
+        },
+        {
+          "tag": "Revenues",
+          "period": {
+            "start": "2023-04-01",
+            "end": "2023-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2023-08-11",
+            "form": "10-Q",
+            "accn": "0001829126-23-005353",
+            "val": 174564000
+          },
+          "as_LATER_reported": {
+            "filed": "2024-08-21",
+            "form": "10-Q",
+            "accn": "0001829126-24-005700",
+            "val": 171950000
+          },
+          "delta": -2614000,
+          "delta_pct": -1.5
+        }
+      ]
+    },
+    "Danimer Scientific (delisted)": {
+      "http": 200,
+      "n_periods_reported_more_than_once": 101,
+      "n_periods_with_CONFLICTING_values": 19,
+      "restatement_rate": 0.1881,
+      "examples": [
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2020-01-01",
+            "end": "2020-03-31"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2020-07-31",
+            "form": "10-Q",
+            "accn": "0001213900-20-019509",
+            "val": -60
+          },
+          "as_LATER_reported": {
+            "filed": "2021-05-18",
+            "form": "10-Q",
+            "accn": "0000950170-21-000276",
+            "val": -1681000
+          },
+          "delta": -1680940,
+          "delta_pct": -2801566.67
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2020-01-01",
+            "end": "2020-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2020-07-31",
+            "form": "10-Q",
+            "accn": "0001213900-20-019509",
+            "val": -85935
+          },
+          "as_LATER_reported": {
+            "filed": "2021-08-16",
+            "form": "10-Q",
+            "accn": "0000950170-21-001504",
+            "val": -3481000
+          },
+          "delta": -3395065,
+          "delta_pct": -3950.74
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2020-04-01",
+            "end": "2020-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2020-07-31",
+            "form": "10-Q",
+            "accn": "0001213900-20-019509",
+            "val": -85875
+          },
+          "as_LATER_reported": {
+            "filed": "2021-08-16",
+            "form": "10-Q",
+            "accn": "0000950170-21-001504",
+            "val": -1800000
+          },
+          "delta": -1714125,
+          "delta_pct": -1996.07
+        }
+      ]
+    },
+    "Silvergate Capital (delisted)": {
+      "http": 200,
+      "n_periods_reported_more_than_once": 46,
+      "n_periods_with_CONFLICTING_values": 0,
+      "restatement_rate": 0.0,
+      "examples": []
+    },
+    "Vincerx Pharma (delisted)": {
+      "http": 200,
+      "n_periods_reported_more_than_once": 109,
+      "n_periods_with_CONFLICTING_values": 13,
+      "restatement_rate": 0.1193,
+      "examples": [
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2022-01-01",
+            "end": "2022-03-31"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2022-05-12",
+            "form": "10-Q",
+            "accn": "0000950170-22-009732",
+            "val": -32385000
+          },
+          "as_LATER_reported": {
+            "filed": "2023-11-13",
+            "form": "10-Q",
+            "accn": "0000950170-23-062930",
+            "val": -26041000
+          },
+          "delta": 6344000,
+          "delta_pct": 19.59
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2022-01-01",
+            "end": "2022-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2022-08-16",
+            "form": "10-Q",
+            "accn": "0000950170-22-017455",
+            "val": -64476000
+          },
+          "as_LATER_reported": {
+            "filed": "2023-08-14",
+            "form": "10-Q",
+            "accn": "0000950170-23-042402",
+            "val": -56813000
+          },
+          "delta": 7663000,
+          "delta_pct": 11.89
+        },
+        {
+          "tag": "NetIncomeLoss",
+          "period": {
+            "start": "2022-04-01",
+            "end": "2022-06-30"
+          },
+          "n_distinct_values": 2,
+          "as_FIRST_reported": {
+            "filed": "2022-08-16",
+            "form": "10-Q",
+            "accn": "0000950170-22-017455",
+            "val": -32091000
+          },
+          "as_LATER_reported": {
+            "filed": "2023-11-13",
+            "form": "10-Q",
+            "accn": "0000950170-23-062930",
+            "val": -30772000
+          },
+          "delta": 1319000,
+          "delta_pct": 4.11
+        }
+      ]
+    }
+  },
+  "EDGAR_total_conflicting_periods": 103,
+  "FMP_stable_api": {
+    "note": "key present in .env; never logged, never committed",
+    "stable/quote (AAPL, liveness)": {
+      "http": 200,
+      "n_rows": 1,
+      "body_head": "[\n  {\n    \"symbol\": \"AAPL\",\n    \"name\": \"Apple Inc.\",\n    \"price\": 316.94,\n    \"changePercentage\": 0.51376,\n    \"change\": 1.62,\n    \"volume\": 29327706,\n    \"dayLow\": 315.78,\n    \"dayHigh\": 323.45,\n    \"yearHigh\": 323.45,"
+    },
+    "stable/delisted-companies": {
+      "http": 200,
+      "n_rows": 100,
+      "body_head": "[\n  {\n    \"symbol\": \"SPCZ\",\n    \"companyName\": \"RiverNorth Enhanced Pre-Merger SPAC ETF\",\n    \"exchange\": \"CBOE\",\n    \"ipoDate\": \"2022-07-12\",\n    \"delistedDate\": \"2026-07-09\"\n  },\n  {\n    \"symbol\": \"PMA\",\n    \"companyNa"
+    },
+    "stable/historical-price-eod/full (INFIQ, delisted)": {
+      "http": 402,
+      "n_rows": null,
+      "body_head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmodelingprep.com/"
+    },
+    "stable/income-statement (INFIQ, delisted)": {
+      "http": 402,
+      "n_rows": null,
+      "body_head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to upgrade your plan at https://financialmodelingprep.com/"
+    }
+  }
+}

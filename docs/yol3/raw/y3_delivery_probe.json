@@ -1,0 +1,316 @@
+{
+  "id": "RR-Y3-001 -- US data-source DELIVERY PROBE (Layer-0, zero cost)",
+  "discipline": "A vendor claim is not evidence. Each axis is DELIVERED / MISSING / PARTIAL / NOT_MEASURED, shown with data. Nothing is inferred; nothing is purchased.",
+  "sample_provenance": {
+    "built_from": "SEC EDGAR form 25-NSE + company_tickers.json liveness check",
+    "why_independent": "a sample from the vendor under test would make the probe circular",
+    "n_delisted_companies_found": 22,
+    "failures_used_for_the_survivorship_test": {
+      "ALFIQ": "Alfi, Inc. -- Chapter 11 (2022)",
+      "INFIQ": "Infinity Pharmaceuticals -- Chapter 11 (2023)",
+      "MIMOQ": "Airspan Networks -- Chapter 11 (2024)",
+      "SFTGQ": "Shift Technologies -- Chapter 11 (2023)",
+      "SICP": "Silvergate Capital -- wind-down (2024)",
+      "ARDS": "Aridis Pharmaceuticals -- delisted (2023)",
+      "RBTC": "Rubicon Technologies -- delisted (2023)",
+      "DNMR": "Danimer Scientific -- Chapter 11 (2025)",
+      "WINSF": "Wins Finance Holdings -- delisted (2021)",
+      "VINC": "Vincerx Pharma -- delisted"
+    }
+  },
+  "GATED_not_guessed": {
+    "EODHD": {
+      "status": "CREDENTIAL-GATED -- NOT_MEASURED",
+      "reason": "no EODHD_API_KEY in the environment (.env holds ANTHROPIC/EVDS/FINTABLES/FMP/TELEGRAM/MKK).",
+      "consequence": "every EODHD axis in the directive (A1 delisting flag, A2 delisting return, A3 PIT restatement, A4 fundamentals depth) is UNMEASURED. Per the directive: NOT_MEASURED != delivers. No inference is made about them.",
+      "to_unblock": "register a free EODHD account and set EODHD_API_KEY in .env (git-ignored). The probe script is written and will run against it unchanged."
+    },
+    "Sharadar": {
+      "status": "PAID-GATED -- NOT_MEASURED",
+      "reason": "no free tier; the directive forbids any purchase."
+    }
+  },
+  "B1_yfinance_survivorship": {
+    "source": "yfinance (free, no key)",
+    "sample": "10 EDGAR-confirmed delisted US failures",
+    "n_with_any_price_data": 6,
+    "n_with_none": 4,
+    "rows": {
+      "ALFIQ": {
+        "note": "Alfi, Inc. -- Chapter 11 (2022)",
+        "variants": {
+          "ALFIQ": {
+            "rows": 1302,
+            "first": "2021-05-04",
+            "last": "2026-07-10"
+          },
+          "ALFI": {
+            "rows": 663,
+            "first": "2015-11-10",
+            "last": "2018-06-28"
+          }
+        },
+        "ANY_DATA": true
+      },
+      "INFIQ": {
+        "note": "Infinity Pharmaceuticals -- Chapter 11 (2023)",
+        "variants": {
+          "INFIQ": {
+            "rows": 6526,
+            "first": "2000-07-27",
+            "last": "2026-07-10"
+          },
+          "INFI": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          }
+        },
+        "ANY_DATA": true
+      },
+      "MIMOQ": {
+        "note": "Airspan Networks -- Chapter 11 (2024)",
+        "variants": {
+          "MIMOQ": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          },
+          "MIMO": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "SFTGQ": {
+        "note": "Shift Technologies -- Chapter 11 (2023)",
+        "variants": {
+          "SFTGQ": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          },
+          "SFTG": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "SICP": {
+        "note": "Silvergate Capital -- wind-down (2024)",
+        "variants": {
+          "SICP": {
+            "rows": 1675,
+            "first": "2019-11-07",
+            "last": "2026-07-10"
+          }
+        },
+        "ANY_DATA": true
+      },
+      "ARDS": {
+        "note": "Aridis Pharmaceuticals -- delisted (2023)",
+        "variants": {
+          "ARDS": {
+            "rows": 1986,
+            "first": "2018-08-14",
+            "last": "2026-07-10"
+          }
+        },
+        "ANY_DATA": true
+      },
+      "RBTC": {
+        "note": "Rubicon Technologies -- delisted (2023)",
+        "variants": {
+          "RBTC": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "DNMR": {
+        "note": "Danimer Scientific -- Chapter 11 (2025)",
+        "variants": {
+          "DNMR": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "WINSF": {
+        "note": "Wins Finance Holdings -- delisted (2021)",
+        "variants": {
+          "WINSF": {
+            "rows": 2936,
+            "first": "2014-11-04",
+            "last": "2026-07-10"
+          },
+          "WINS": {
+            "rows": 0,
+            "first": null,
+            "last": null
+          }
+        },
+        "ANY_DATA": true
+      },
+      "VINC": {
+        "note": "Vincerx Pharma -- delisted",
+        "variants": {
+          "VINC": {
+            "rows": 1538,
+            "first": "2020-05-27",
+            "last": "2026-07-10"
+          }
+        },
+        "ANY_DATA": true
+      }
+    }
+  },
+  "FMP_free_tier": {
+    "source": "FMP free tier (key present in .env; NOT logged)",
+    "delisted_companies_endpoint": {
+      "http": 403,
+      "n": null,
+      "sample": "{\n  \"Error Message\": \"Legacy Endpoint : Due to Legacy endpoints being no longer supported - This endpoint is only available for legacy users who have valid subscriptions prior August 31, 2025. Please "
+    },
+    "price_history_on_delisted": {
+      "ALFIQ": {
+        "variants": {
+          "ALFIQ": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          },
+          "ALFI": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "INFIQ": {
+        "variants": {
+          "INFIQ": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          },
+          "INFI": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "MIMOQ": {
+        "variants": {
+          "MIMOQ": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          },
+          "MIMO": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "SFTGQ": {
+        "variants": {
+          "SFTGQ": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          },
+          "SFTG": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "SICP": {
+        "variants": {
+          "SICP": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          }
+        },
+        "ANY_DATA": false
+      },
+      "ARDS": {
+        "variants": {
+          "ARDS": {
+            "http": 403,
+            "rows": 0,
+            "last": null,
+            "first": null
+          }
+        },
+        "ANY_DATA": false
+      }
+    },
+    "n_with_any_price_data": 0,
+    "n_probed": 6
+  },
+  "B2_edgar_pit_ground_truth": {
+    "source": "SEC EDGAR XBRL companyfacts (free, official, no key)",
+    "why_this_is_the_ground_truth": "every fact is stamped with the accession and FILING DATE that reported it. The same (fy, fp, period) reported twice with different values IS a restatement -- detectable with no vendor at all. This is the reference a vendor's PIT claim must be checked against.",
+    "companies_checked": [
+      {
+        "name": "INFINITY PHARMACEUTICALS",
+        "cik": 1113148,
+        "http": 200,
+        "n_periods_with_conflicting_values": 0
+      },
+      {
+        "name": "Airspan Networks Holdings",
+        "cik": 1823882,
+        "http": 200,
+        "n_periods_with_conflicting_values": 0
+      },
+      {
+        "name": "Aridis Pharmaceuticals",
+        "cik": 1614067,
+        "http": 200,
+        "n_periods_with_conflicting_values": 0
+      },
+      {
+        "name": "Rubicon Technologies",
+        "cik": 1862068,
+        "http": 200,
+        "n_periods_with_conflicting_values": 0
+      },
+      {
+        "name": "Danimer Scientific",
+        "cik": 1779020,
+        "http": 200,
+        "n_periods_with_conflicting_values": 0
+      }
+    ],
+    "restatements_found": [],
+    "n_companies_with_a_restatement": 0
+  }
+}

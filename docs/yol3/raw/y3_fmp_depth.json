@@ -1,0 +1,39 @@
+{
+  "id": "RR-Y3-001 part 4 -- FMP free-tier depth + the GAIA control",
+  "profile_control": {
+    "rows": {
+      "AAPL": {
+        "companyName": "Apple Inc.",
+        "marketCap": 4655451249249,
+        "exchange": "NASDAQ",
+        "isActivelyTrading": true,
+        "price": 316.97
+      },
+      "GAIA": {
+        "companyName": "Gaia, Inc.",
+        "marketCap": 52777601,
+        "exchange": "NASDAQ",
+        "isActivelyTrading": true,
+        "price": 2.11
+      },
+      "INFIQ": {
+        "companyName": "Infinity Pharmaceuticals, Inc.",
+        "marketCap": 9076,
+        "exchange": "OTC",
+        "isActivelyTrading": true,
+        "price": 0.0001
+      }
+    },
+    "reading": "if GAIA is an ACTIVELY TRADING company with a small market cap, then FMP's 402 on its quote/history/fundamentals is not about delisting at all -- the free tier simply does not carry small companies. That makes it useless for micro-cap research before survivorship even enters the picture."
+  },
+  "delisted_pagination": {
+    "stopped_at_page": 1,
+    "stop_http": 402,
+    "stop_body": "Premium Query Parameter: 'Special Parameters : The values for 'page' can only be 0 based on your current subscription. Please visit our subscription page to upg",
+    "pages_returned": 1,
+    "rows_total": 100,
+    "oldest_delistedDate_seen": "2026-06-23",
+    "our_edgar_casualties_found": [],
+    "n_ours_found": 0
+  }
+}

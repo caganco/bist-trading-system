@@ -1,0 +1,827 @@
+{
+  "id": "RR-Y3-001 -- US data-source DELIVERY PROBE (Layer-0, zero cost)",
+  "class": "data-delivery test. NOT an edge measurement, NOT a Stage-0, NOT a purchase.",
+  "discipline": "A vendor's documentation is not evidence. Every axis is DELIVERED / MISSING / PARTIAL / NOT_MEASURED, shown with data. An axis that cannot be reached without paying or without a credential is GATED and is NOT guessed at. NOT_MEASURED != delivers.",
+  "zero_cost_attestation": "No subscription, trial or purchase was made. Only free tiers, public endpoints and an already-present free-tier key were used.",
+  "credential_hygiene": "The FMP key was read from .env (git-ignored), never logged, never written to any artifact. This record is scrubbed and asserted key-free.",
+  "SAMPLE": {
+    "why_independent": "a sample supplied by the vendor under test would make the probe circular",
+    "built_from": "SEC EDGAR form 25-NSE (exchange notification of removal from listing) + company_tickers.json liveness check",
+    "trap_caught": "Form 25-NSE is filed PER SECURITY. Goldman Sachs / Two Harbors / Gladstone appear in the raw feed because they removed a preferred series or a note -- not the company. Filtering on the form alone would have poisoned the sample with mega-caps.",
+    "n_raw_filings": 1300,
+    "n_distinct_issuers": 356,
+    "n_excluded_still_listed": 87,
+    "n_company_level_delistings": 22,
+    "failures_used": {
+      "ALFIQ": "Alfi, Inc. -- Chapter 11 (2022)",
+      "INFIQ": "Infinity Pharmaceuticals -- Chapter 11 (2023)",
+      "MIMOQ": "Airspan Networks -- Chapter 11 (2024)",
+      "SFTGQ": "Shift Technologies -- Chapter 11 (2023)",
+      "SICP": "Silvergate Capital -- wind-down (2024)",
+      "ARDS": "Aridis Pharmaceuticals -- delisted (2023)",
+      "RBTC": "Rubicon Technologies -- delisted (2023)",
+      "DNMR": "Danimer Scientific -- Chapter 11 (2025)",
+      "WINSF": "Wins Finance Holdings -- delisted (2021)",
+      "VINC": "Vincerx Pharma -- delisted"
+    }
+  },
+  "AXIS_1_delisting_event_record": {
+    "SEC_EDGAR": {
+      "verdict": "DELIVERED (free, official)",
+      "evidence": "form 25-NSE is the exchange's own delisting notice. 8,050 filings 2021-2024; a 1,300-filing slice yielded 356 distinct issuers, of which 22 are company-level delistings after removing per-security noise.",
+      "caveat": "filed PER SECURITY -- a naive pull returns Goldman Sachs and Two Harbors (they delisted a preferred series, not the company). Requires the liveness filter used here."
+    },
+    "FMP_free_tier": {
+      "verdict": "PARTIAL -- a teaser, not a dataset",
+      "evidence": {
+        "stopped_at_page": 1,
+        "stop_http": 402,
+        "stop_body": "Premium Query Parameter: 'Special Parameters : The values for 'page' can only be 0 based on your current subscription. Please visit our subscription page to upg",
+        "pages_returned": 1,
+        "rows_total": 100,
+        "oldest_delistedDate_seen": "2026-06-23",
+        "our_edgar_casualties_found": [],
+        "n_ours_found": 0
+      },
+      "reading": "the delisted-companies list IS free and carries symbol / companyName / exchange / ipoDate / delistedDate. But it returns ONE page (100 rows), the oldest delistedDate seen is 2026-06-23, and NONE of the 2021-2023 EDGAR-confirmed casualties appear. It is a recent-delistings feed, not a historical universe."
+    },
+    "EODHD": {
+      "verdict": "NOT_MEASURED -- CREDENTIAL-GATED"
+    }
+  },
+  "AXIS_2_delisted_price_series": {
+    "yfinance": {
+      "verdict": "MISSING -- and the failure mode is worse than survivorship",
+      "n_casualties_probed": 10,
+      "n_with_any_price_data": 6,
+      "n_with_none": 4,
+      "THE_REAL_TRAP": "TICKER REUSE. Querying the PRE-bankruptcy ticker 'ALFI' returns 663 rows dated 2015-11-10 to 2018 -- a DIFFERENT company that previously held the symbol. Meanwhile 'INFI' (Infinity's listed ticker) returns 0 rows, and MIMO / SFT / WINS / RBTC / DNMR return nothing at all. So a historical universe file cannot be joined to prices BY TICKER: the join silently returns either nothing, or the wrong company.",
+      "rows": {
+        "ALFIQ": {
+          "note": "Alfi, Inc. -- Chapter 11 (2022)",
+          "variants": {
+            "ALFIQ": {
+              "rows": 1302,
+              "first": "2021-05-04",
+              "last": "2026-07-10"
+            },
+            "ALFI": {
+              "rows": 663,
+              "first": "2015-11-10",
+              "last": "2018-06-28"
+            }
+          },
+          "ANY_DATA": true
+        },
+        "INFIQ": {
+          "note": "Infinity Pharmaceuticals -- Chapter 11 (2023)",
+          "variants": {
+            "INFIQ": {
+              "rows": 6526,
+              "first": "2000-07-27",
+              "last": "2026-07-10"
+            },
+            "INFI": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            }
+          },
+          "ANY_DATA": true
+        },
+        "MIMOQ": {
+          "note": "Airspan Networks -- Chapter 11 (2024)",
+          "variants": {
+            "MIMOQ": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            },
+            "MIMO": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            }
+          },
+          "ANY_DATA": false
+        },
+        "SFTGQ": {
+          "note": "Shift Technologies -- Chapter 11 (2023)",
+          "variants": {
+            "SFTGQ": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            },
+            "SFTG": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            }
+          },
+          "ANY_DATA": false
+        },
+        "SICP": {
+          "note": "Silvergate Capital -- wind-down (2024)",
+          "variants": {
+            "SICP": {
+              "rows": 1675,
+              "first": "2019-11-07",
+              "last": "2026-07-10"
+            }
+          },
+          "ANY_DATA": true
+        },
+        "ARDS": {
+          "note": "Aridis Pharmaceuticals -- delisted (2023)",
+          "variants": {
+            "ARDS": {
+              "rows": 1986,
+              "first": "2018-08-14",
+              "last": "2026-07-10"
+            }
+          },
+          "ANY_DATA": true
+        },
+        "RBTC": {
+          "note": "Rubicon Technologies -- delisted (2023)",
+          "variants": {
+            "RBTC": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            }
+          },
+          "ANY_DATA": false
+        },
+        "DNMR": {
+          "note": "Danimer Scientific -- Chapter 11 (2025)",
+          "variants": {
+            "DNMR": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            }
+          },
+          "ANY_DATA": false
+        },
+        "WINSF": {
+          "note": "Wins Finance Holdings -- delisted (2021)",
+          "variants": {
+            "WINSF": {
+              "rows": 2936,
+              "first": "2014-11-04",
+              "last": "2026-07-10"
+            },
+            "WINS": {
+              "rows": 0,
+              "first": null,
+              "last": null
+            }
+          },
+          "ANY_DATA": true
+        },
+        "VINC": {
+          "note": "Vincerx Pharma -- delisted",
+          "variants": {
+            "VINC": {
+              "rows": 1538,
+              "first": "2020-05-27",
+              "last": "2026-07-10"
+            }
+          },
+          "ANY_DATA": true
+        }
+      }
+    },
+    "FMP_free_tier": {
+      "verdict": "MISSING -- and not because of delisting",
+      "THE_CONTROL_THAT_SETTLES_IT": {
+        "AAPL": {
+          "companyName": "Apple Inc.",
+          "marketCap": 4655451249249,
+          "exchange": "NASDAQ",
+          "isActivelyTrading": true,
+          "price": 316.97
+        },
+        "GAIA": {
+          "companyName": "Gaia, Inc.",
+          "marketCap": 52777601,
+          "exchange": "NASDAQ",
+          "isActivelyTrading": true,
+          "price": 2.11
+        },
+        "INFIQ": {
+          "companyName": "Infinity Pharmaceuticals, Inc.",
+          "marketCap": 9076,
+          "exchange": "OTC",
+          "isActivelyTrading": true,
+          "price": 0.0001
+        }
+      },
+      "matrix": {
+        "AAPL (live mega-cap)": {
+          "quote": {
+            "http": 200,
+            "n": 1,
+            "head": null
+          },
+          "historical-price-eod/full": {
+            "http": 200,
+            "n": 1254,
+            "head": null
+          },
+          "income-statement": {
+            "http": 200,
+            "n": 4,
+            "head": null
+          },
+          "profile": {
+            "http": 200,
+            "n": 1,
+            "head": null
+          }
+        },
+        "GAIA (live micro-cap)": {
+          "quote": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "historical-price-eod/full": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "income-statement": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "profile": {
+            "http": 200,
+            "n": 1,
+            "head": null
+          }
+        },
+        "INFIQ (delisted, Ch.11)": {
+          "quote": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "historical-price-eod/full": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "income-statement": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "profile": {
+            "http": 200,
+            "n": 1,
+            "head": null
+          }
+        },
+        "MIMO (delisted, Ch.11)": {
+          "quote": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "historical-price-eod/full": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "income-statement": {
+            "http": 402,
+            "n": null,
+            "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+          },
+          "profile": {
+            "http": 200,
+            "n": 1,
+            "head": null
+          }
+        }
+      },
+      "reading": "the free tier is a SYMBOL WHITELIST, not an endpoint tier. GAIA -- a LIVE, actively-trading US micro-cap with a ~$53M market cap, i.e. exactly the target universe -- returns HTTP 402 on quote, price history AND fundamentals. AAPL returns 200 on all three. So FMP's free tier cannot serve micro-caps at all, living or dead. Survivorship never even enters the picture: the coverage is simply absent.",
+      "note_on_v3": "every legacy /api/v3 endpoint now returns HTTP 403: 'Legacy Endpoint ... only available for legacy users with valid subscriptions prior August 31, 2025'. The key reaches /stable/ only."
+    },
+    "EODHD": {
+      "verdict": "NOT_MEASURED -- CREDENTIAL-GATED"
+    }
+  },
+  "AXIS_3_delisting_RETURN": {
+    "status": "NOT_MEASURED across every free source",
+    "why_it_matters": "the CRSP convention treats the delisting return as a SEPARATE field. Without it, a backtest's return on the delisting day is simply missing -- which is hidden survivorship even when the price series itself is present.",
+    "SEC_EDGAR": "does not carry prices at all -> cannot supply it, by construction.",
+    "yfinance": "no such field. The series simply stops (or never existed).",
+    "FMP_free_tier": "unreachable -- 402 on price history for any micro-cap.",
+    "EODHD": "NOT_MEASURED -- CREDENTIAL-GATED."
+  },
+  "AXIS_4_PIT_as_reported_fundamentals_and_RESTATEMENT": {
+    "SEC_EDGAR": {
+      "verdict": "DELIVERED -- and it IS the ground truth",
+      "mechanism": "XBRL companyfacts stamps EVERY fact with the accession and the FILING DATE that reported it. The same economic period reported twice with different values IS a restatement -- mechanically detectable with no vendor at all.",
+      "self_correction_recorded": "first pass grouped facts by (fy, fp) and found ZERO restatements. That key is wrong: in companyfacts, fy/fp describe the FILING, not the fact's period, so the original and the re-report of the same quarter land in DIFFERENT groups and can never be compared. Regrouped on the economic period (tag, start, end).",
+      "MEASURED_RESULT": {
+        "companies_scanned": 7,
+        "total_conflicting_periods": 103,
+        "per_company": {
+          "INFINITY PHARMACEUTICALS (delisted)": {
+            "periods_reported_more_than_once": 272,
+            "periods_with_CONFLICTING_values": 22,
+            "restatement_rate": 0.0809
+          },
+          "Airspan Networks (delisted)": {
+            "periods_reported_more_than_once": 57,
+            "periods_with_CONFLICTING_values": 15,
+            "restatement_rate": 0.2632
+          },
+          "Aridis Pharmaceuticals (delisted)": {
+            "periods_reported_more_than_once": 109,
+            "periods_with_CONFLICTING_values": 11,
+            "restatement_rate": 0.1009
+          },
+          "Rubicon Technologies (delisted)": {
+            "periods_reported_more_than_once": 45,
+            "periods_with_CONFLICTING_values": 23,
+            "restatement_rate": 0.5111
+          },
+          "Danimer Scientific (delisted)": {
+            "periods_reported_more_than_once": 101,
+            "periods_with_CONFLICTING_values": 19,
+            "restatement_rate": 0.1881
+          },
+          "Silvergate Capital (delisted)": {
+            "periods_reported_more_than_once": 46,
+            "periods_with_CONFLICTING_values": 0,
+            "restatement_rate": 0.0
+          },
+          "Vincerx Pharma (delisted)": {
+            "periods_reported_more_than_once": 109,
+            "periods_with_CONFLICTING_values": 13,
+            "restatement_rate": 0.1193
+          }
+        },
+        "examples": {
+          "INFINITY PHARMACEUTICALS (delisted)": [
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2010-01-01",
+                "end": "2010-12-31"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2012-03-13",
+                "form": "10-K",
+                "accn": "0001193125-12-111977",
+                "val": -48983659
+              },
+              "as_LATER_reported": {
+                "filed": "2013-03-05",
+                "form": "10-K",
+                "accn": "0001193125-13-091650",
+                "val": -48984000
+              },
+              "delta": -341,
+              "delta_pct": -0.0
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2011-01-01",
+                "end": "2011-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2011-08-09",
+                "form": "10-Q",
+                "accn": "0001193125-11-216464",
+                "val": -14036536
+              },
+              "as_LATER_reported": {
+                "filed": "2012-08-07",
+                "form": "10-Q",
+                "accn": "0001193125-12-339352",
+                "val": -14037000
+              },
+              "delta": -464,
+              "delta_pct": -0.0
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2011-04-01",
+                "end": "2011-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2011-08-09",
+                "form": "10-Q",
+                "accn": "0001193125-11-216464",
+                "val": -11729991
+              },
+              "as_LATER_reported": {
+                "filed": "2013-03-05",
+                "form": "10-K",
+                "accn": "0001193125-13-091650",
+                "val": -11730000
+              },
+              "delta": -9,
+              "delta_pct": -0.0
+            }
+          ],
+          "Airspan Networks (delisted)": [
+            {
+              "tag": "Revenues",
+              "period": {
+                "start": "2020-01-01",
+                "end": "2020-09-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2021-11-12",
+                "form": "10-Q",
+                "accn": "0001829126-21-014189",
+                "val": 91409000
+              },
+              "as_LATER_reported": {
+                "filed": "2022-04-08",
+                "form": "10-K",
+                "accn": "0001829126-22-007958",
+                "val": 172955000
+              },
+              "delta": 81546000,
+              "delta_pct": 89.21
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2020-08-20",
+                "end": "2020-12-31"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2021-03-31",
+                "form": "10-K",
+                "accn": "0001829126-21-002055",
+                "val": -202686
+              },
+              "as_LATER_reported": {
+                "filed": "2021-05-14",
+                "form": "10-K/A",
+                "accn": "0001829126-21-003918",
+                "val": 4092424
+              },
+              "delta": 4295110,
+              "delta_pct": 2119.1
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2021-01-01",
+                "end": "2021-03-31"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2021-05-18",
+                "form": "10-Q",
+                "accn": "0001829126-21-004035",
+                "val": 3043204
+              },
+              "as_LATER_reported": {
+                "filed": "2022-11-09",
+                "form": "10-Q",
+                "accn": "0001829126-22-019069",
+                "val": -13549000
+              },
+              "delta": -16592204,
+              "delta_pct": -545.22
+            }
+          ],
+          "Aridis Pharmaceuticals (delisted)": [
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2022-01-01",
+                "end": "2022-03-31"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2022-05-16",
+                "form": "10-Q",
+                "accn": "0001104659-22-061404",
+                "val": -7766000
+              },
+              "as_LATER_reported": {
+                "filed": "2023-06-08",
+                "form": "10-Q",
+                "accn": "0001493152-23-020599",
+                "val": -7766000
+              },
+              "delta": 0,
+              "delta_pct": 0.0
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2022-01-01",
+                "end": "2022-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2022-08-16",
+                "form": "10-Q",
+                "accn": "0001493152-22-023089",
+                "val": -15745000
+              },
+              "as_LATER_reported": {
+                "filed": "2023-09-14",
+                "form": "10-Q",
+                "accn": "0001493152-23-032540",
+                "val": -15745000
+              },
+              "delta": 0,
+              "delta_pct": 0.0
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2022-04-01",
+                "end": "2022-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2022-08-16",
+                "form": "10-Q",
+                "accn": "0001493152-22-023089",
+                "val": -7979000
+              },
+              "as_LATER_reported": {
+                "filed": "2023-09-14",
+                "form": "10-Q",
+                "accn": "0001493152-23-032540",
+                "val": -7979000
+              },
+              "delta": 0,
+              "delta_pct": 0.0
+            }
+          ],
+          "Rubicon Technologies (delisted)": [
+            {
+              "tag": "Revenues",
+              "period": {
+                "start": "2023-01-01",
+                "end": "2023-03-31"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2023-05-22",
+                "form": "10-Q",
+                "accn": "0001829126-23-003671",
+                "val": 181098000
+              },
+              "as_LATER_reported": {
+                "filed": "2024-05-20",
+                "form": "10-Q",
+                "accn": "0001829126-24-003560",
+                "val": 179057000
+              },
+              "delta": -2041000,
+              "delta_pct": -1.13
+            },
+            {
+              "tag": "Revenues",
+              "period": {
+                "start": "2023-01-01",
+                "end": "2023-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2023-08-11",
+                "form": "10-Q",
+                "accn": "0001829126-23-005353",
+                "val": 355662000
+              },
+              "as_LATER_reported": {
+                "filed": "2024-08-21",
+                "form": "10-Q",
+                "accn": "0001829126-24-005700",
+                "val": 351006000
+              },
+              "delta": -4656000,
+              "delta_pct": -1.31
+            },
+            {
+              "tag": "Revenues",
+              "period": {
+                "start": "2023-04-01",
+                "end": "2023-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2023-08-11",
+                "form": "10-Q",
+                "accn": "0001829126-23-005353",
+                "val": 174564000
+              },
+              "as_LATER_reported": {
+                "filed": "2024-08-21",
+                "form": "10-Q",
+                "accn": "0001829126-24-005700",
+                "val": 171950000
+              },
+              "delta": -2614000,
+              "delta_pct": -1.5
+            }
+          ],
+          "Danimer Scientific (delisted)": [
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2020-01-01",
+                "end": "2020-03-31"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2020-07-31",
+                "form": "10-Q",
+                "accn": "0001213900-20-019509",
+                "val": -60
+              },
+              "as_LATER_reported": {
+                "filed": "2021-05-18",
+                "form": "10-Q",
+                "accn": "0000950170-21-000276",
+                "val": -1681000
+              },
+              "delta": -1680940,
+              "delta_pct": -2801566.67
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2020-01-01",
+                "end": "2020-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2020-07-31",
+                "form": "10-Q",
+                "accn": "0001213900-20-019509",
+                "val": -85935
+              },
+              "as_LATER_reported": {
+                "filed": "2021-08-16",
+                "form": "10-Q",
+                "accn": "0000950170-21-001504",
+                "val": -3481000
+              },
+              "delta": -3395065,
+              "delta_pct": -3950.74
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2020-04-01",
+                "end": "2020-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2020-07-31",
+                "form": "10-Q",
+                "accn": "0001213900-20-019509",
+                "val": -85875
+              },
+              "as_LATER_reported": {
+                "filed": "2021-08-16",
+                "form": "10-Q",
+                "accn": "0000950170-21-001504",
+                "val": -1800000
+              },
+              "delta": -1714125,
+              "delta_pct": -1996.07
+            }
+          ],
+          "Vincerx Pharma (delisted)": [
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2022-01-01",
+                "end": "2022-03-31"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2022-05-12",
+                "form": "10-Q",
+                "accn": "0000950170-22-009732",
+                "val": -32385000
+              },
+              "as_LATER_reported": {
+                "filed": "2023-11-13",
+                "form": "10-Q",
+                "accn": "0000950170-23-062930",
+                "val": -26041000
+              },
+              "delta": 6344000,
+              "delta_pct": 19.59
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2022-01-01",
+                "end": "2022-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2022-08-16",
+                "form": "10-Q",
+                "accn": "0000950170-22-017455",
+                "val": -64476000
+              },
+              "as_LATER_reported": {
+                "filed": "2023-08-14",
+                "form": "10-Q",
+                "accn": "0000950170-23-042402",
+                "val": -56813000
+              },
+              "delta": 7663000,
+              "delta_pct": 11.89
+            },
+            {
+              "tag": "NetIncomeLoss",
+              "period": {
+                "start": "2022-04-01",
+                "end": "2022-06-30"
+              },
+              "n_distinct_values": 2,
+              "as_FIRST_reported": {
+                "filed": "2022-08-16",
+                "form": "10-Q",
+                "accn": "0000950170-22-017455",
+                "val": -32091000
+              },
+              "as_LATER_reported": {
+                "filed": "2023-11-13",
+                "form": "10-Q",
+                "accn": "0000950170-23-062930",
+                "val": -30772000
+              },
+              "delta": 1319000,
+              "delta_pct": 4.11
+            }
+          ]
+        }
+      },
+      "THE_FINDING": "restatement is NOT an edge case in micro-cap -- it is ENDEMIC. Rubicon Technologies conflicts on 23 of 45 re-reported periods (51%). Six of seven companies show conflicts. So any vendor that serves a CURRENT VIEW instead of an AS-REPORTED snapshot leaks future information into every single backtest on this universe."
+    },
+    "EODHD": {
+      "verdict": "NOT_MEASURED -- CREDENTIAL-GATED",
+      "schema_evidence_only": {
+        "note": "the public demo token (AAPL only) confirms the FIELDS EXIST. Field existence is NOT delivery.",
+        "IsDelisted_field_exists": true,
+        "UpdatedAt_field_exists": true,
+        "UpdatedAt_value_for_AAPL": "2026-07-13 (today's date at probe time)",
+        "demo_token_on_a_delisted_microcap": "HTTP 403 Forbidden -- the demo token is restricted to a handful of symbols and cannot answer any micro-cap question."
+      },
+      "HYPOTHESIS_to_test_when_a_key_exists": "UpdatedAt on AAPL fundamentals equals TODAY'S DATE, which is consistent with a daily-refreshed CURRENT VIEW rather than an as-reported archive. If so, EODHD fundamentals would carry restatement leakage. This is a HYPOTHESIS, not a finding: it is recorded with its exact test (below) and is NOT counted as evidence either way.",
+      "EXACT_TEST_ready_to_run": "pick a period where EDGAR shows a conflict (see the examples above -- e.g. Rubicon or Infinity). Ask EODHD for that quarter. If EODHD returns the LATER (restated) value, its fundamentals are a current view and are unusable for a PIT backtest without an as-reported archive. If it returns the FIRST-reported value, the PIT claim is delivered. EDGAR supplies both values and their filing dates, so the test is decisive and free."
+    },
+    "Sharadar": {
+      "verdict": "NOT_MEASURED -- PAID-GATED"
+    }
+  },
+  "AXIS_5_Form4_insider_microcap": {
+    "SEC_EDGAR": {
+      "verdict": "DELIVERED IN PRINCIPLE (free, official) -- NOT YET PARSED",
+      "reading": "Form 4 is filed with the SEC; EDGAR is the ORIGIN of every vendor's insider feed. Access is free. The cost is not money, it is parsing/normalisation effort.",
+      "status": "the parse was NOT built in this probe (out of the F0 delivery-test scope). Marked as a KNOWN, cheap follow-up rather than claimed as done."
+    },
+    "Sharadar_SF2": {
+      "verdict": "NOT_MEASURED -- PAID-GATED"
+    }
+  },
+  "GATES": {
+    "EODHD": {
+      "status": "CREDENTIAL-GATED -- every axis NOT_MEASURED",
+      "reason": "no EODHD_<redacted> in the environment (.env holds ANTHROPIC / EVDS / FINTABLES / FMP / TELEGRAM / MKK).",
+      "to_unblock": "register a FREE EODHD account (no payment) and set EODHD_<redacted> in .env. The probe is written and will run unchanged against it; the 20-call/day free tier is enough for the 10-15 name sample."
+    },
+    "Sharadar": {
+      "status": "PAID-GATED -- NOT_MEASURED",
+      "trial_research": "attempted. The Nasdaq Data Link product page (data.nasdaq.com/databases/SFA) is JavaScript-rendered and could not be read programmatically; no free-trial tier was confirmed from the public search results either. Recorded as UNVERIFIED -- NOT as 'no trial exists'.",
+      "what_would_be_measured_if_paid": [
+        "SEP: is there a separate delisting-RETURN field, or does the series merely stop?",
+        "SF1 ARQ dimension: as-reported vs restated -- checked against the EDGAR conflicts found above (EDGAR gives the answer key for free).",
+        "SF2: Form-4 transaction density on a micro-cap slice -- is it populated below $300M market cap?"
+      ]
+    }
+  }
+}
