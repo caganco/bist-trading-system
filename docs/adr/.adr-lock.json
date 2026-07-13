@@ -1,0 +1,45 @@
+{
+  "_comment": "Byte reference for accepted decision records. Regenerate with `python tools/adr_guard.py --update-lock`; CI verifies, never writes.",
+  "records": {
+    "ADR-0000": {
+      "status": "accepted",
+      "frozen_hash": "2e7817963c85bd47cb7f22a9289456b4575c447bab3bb6d2a0d466726b11677c"
+    },
+    "ADR-0001": {
+      "status": "accepted",
+      "frozen_hash": "c815df76db6e8cd055895cfbcc1104de28bbd1476035ffb25d369543ef3fa832"
+    },
+    "ADR-0002": {
+      "status": "accepted",
+      "frozen_hash": "fd32034085071d974b508875ba9484b4aa9cb7898f6915420537e42214190457"
+    },
+    "ADR-0003": {
+      "status": "accepted",
+      "frozen_hash": "4b16a83a7288e754015a0778d6964f938abcab2fbf08821679e2e4bdf1f88ed3"
+    },
+    "ADR-0004": {
+      "status": "accepted",
+      "frozen_hash": "473da6221278c7dd797e6135c1d8e1fa8a78234a49d13deb5f50e79c666651bc"
+    },
+    "ADR-0005": {
+      "status": "accepted",
+      "frozen_hash": "a54e1c01c053cfcbce336c44cd63f5d380195e2df9294ca783389422dcdcb767"
+    },
+    "ADR-0006": {
+      "status": "accepted",
+      "frozen_hash": "0d89090537ca9c51ad7ccec2c394ca617fb6855c6fa780a17bc968e85a994cc0"
+    },
+    "ADR-0007": {
+      "status": "accepted",
+      "frozen_hash": "dc44caaf8746a9ab57bce56f0e167e68459ba343bd3a5abf0833f4abca27d604"
+    },
+    "ADR-0008": {
+      "status": "accepted",
+      "frozen_hash": "1a3d257c881ff1bbc492507f81dfcccb1670d0ad9ac21933f8fbfd2c28fef981"
+    },
+    "ADR-0009": {
+      "status": "accepted",
+      "frozen_hash": "986a94d4d6fe708a10e048319f0954e8f6562c6f4ce16196f346975300fb5e4a"
+    }
+  }
+}
