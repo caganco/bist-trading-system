@@ -1,0 +1,155 @@
+{
+  "id": "RR-Y1-029 -- Mod-A eligibility look-ahead: scope + impact diagnostic (READ-ONLY)",
+  "class": "diagnostic. No code change, no verdict change, no candidate re-adjudicated.",
+  "provenance": "the caveat RR-Y1-028-V declared and could NOT verify away.",
+  "Q1_SCOPE": {
+    "question": "Where is the [d0,d1] full-window selection, and which legs consume it?",
+    "method": "call-graph read of src/engine/*, verified by grep; encoded here as fact, not opinion.",
+    "the_look_ahead": "moda._eligible_names(panel, names, split_asof, d0, d1) selects the universe using (a) _window_median_adv -- the MEDIAN over [d0,d1] of each name's trailing-63d median traded value, and (b) continuous_basket(panel, d0, d1, min_cov) -- attendance over [d0,d1]. Both read the FUTURE half of the evaluation window relative to d0.",
+    "pre_existing_vs_added": "continuous_basket(d0, d1) predates RR-Y1-028 (the old rule used min_cov=1.0 over the same window). RR-Y1-028 ADDED the liquidity leg to that window-wide selection. So the look-ahead is not new; its SURFACE was widened from attendance-only to attendance+liquidity.",
+    "consumers": {
+      "Mod_A (moda.run_moda:557)": {
+        "uses_eligibility": true,
+        "feeds_a_VERDICT": true,
+        "which_fields": [
+          "agreement_pass",
+          "agreement_t_cross_median",
+          "sign_consistency",
+          "pbo (real CSCV)"
+        ],
+        "why": "name_splits() is built FROM `eligible`, and conjugate_agreement() runs on those arms. The verdict is computed on the peeked universe."
+      },
+      "Mod_B (modb.run_modb:108)": {
+        "uses_eligibility": false,
+        "feeds_a_VERDICT": true,
+        "which_fields": [
+          "dsr",
+          "pbo (Mod-B proxy)"
+        ],
+        "why": "modb uses `names = panel.names` -- the full cross-section, no eligibility selection. CLEAN."
+      },
+      "Mod_C (modc._residual_flag_on_window:68)": {
+        "uses_eligibility": true,
+        "feeds_a_VERDICT": false,
+        "which_fields": [
+          "holdout_confidence (additive qualifier ONLY)"
+        ],
+        "why": "the eligibility call sits inside _residual_flag_on_window, whose output feeds assess_holdout_confidence. The Mod-C VERDICT (holdout_persistence_pass) comes from holdout_ic_t + sign, computed via rank_ic_series over the FULL cross-section. RR-Y1-009/010 already state the qualifier is additive-only and never moves pass/fail."
+      },
+      "harness returns/cost path (_tilt_active)": {
+        "uses_eligibility": false,
+        "feeds_a_VERDICT": true,
+        "which_fields": [
+          "gross_active_ann",
+          "net_active_ann",
+          "cost_ann",
+          "nw_t",
+          "beats_benchmark_floor"
+        ],
+        "why": "_tilt_active scores panel.names directly; the universe is the whole panel, masked only by score/return availability at each date. CLEAN."
+      }
+    },
+    "ANSWER": "The look-ahead is confined to moda._eligible_names. It reaches a VERDICT in exactly ONE leg: Mod-A (agreement + real CSCV PBO). Mod-C touches it but only through an additive confidence qualifier that by construction cannot move a pass/fail. Mod-B and the returns/cost path -- which is where EVERY committed verdict was actually decided -- do not use it at all."
+  },
+  "Q2a_HISTORICAL_IMPACT": {
+    "question": "Did this look-ahead determine any historical verdict?",
+    "method": "The look-ahead can only have decided a verdict if agreement_pass or the real CSCV pbo was IN that verdict's keep-bar AND was actually produced. Both are checked against the committed records (same discipline as the RR-Y1-028 D3 impact scan).",
+    "records": {
+      "PEAD (RR-Y1-014)": {
+        "keep_bar": "full-panel NW-t >= 2.0 AND X2-lockbox NW-t >= 2.0 (RR-Y1-014-RESULT.md L12)",
+        "agreement_in_keep_bar": false,
+        "mod_a_actually_ran": false,
+        "evidence": "committed engine output carries agreement_pass=false with the guard 'only 38 eligible names; need >= 100' -- the leg never executed."
+      },
+      "VIOP-K2": {
+        "keep_bar": "Stage-0 single metric: {\"metric\": \"nw_t_rank_ic\", \"threshold\": 2.0}",
+        "agreement_in_keep_bar": false,
+        "mod_a_actually_ran": false,
+        "evidence": "graveyard doc decides on NW-t = -0.073; the same 38-name guard applies."
+      },
+      "RR-Y1-008 (part 1/2)": {
+        "keep_bar": "N/A -- instrument exam (VALIDATOR-VALIDATION), not an edge verdict",
+        "agreement_in_keep_bar": false,
+        "mod_a_actually_ran": "with MIN_NAMES_PER_ARM relaxed to 30 and an arm of ~37 -- explicitly graded LOW confidence at the time",
+        "evidence": "docs/RESEARCH_REGISTRY.md RR-Y1-008 row; config.py comment on AGREEMENT_MIN_ARM_FOR_HIGH_CONFIDENCE."
+      },
+      "Mod-C (any record)": {
+        "mod_c_ever_ran": false,
+        "evidence": "grep: SplitMode.TIME_HOLDOUT appears ONLY in src/engine/* and tests/*. No script, no committed record uses it."
+      }
+    },
+    "ANSWER": "ZERO. No committed verdict placed agreement_pass or the real CSCV pbo in its keep-bar, and on the real panel the Mod-A leg could not execute anyway (38 < 100). Mod-C never ran at all. Every committed verdict was decided on NW-t, which comes from the eligibility-free returns/cost path. The look-ahead has never touched a recorded result.",
+    "BUT": "This is a statement about the PAST only. RR-Y1-028 made Mod-A executable (231 names). From this point on, the look-ahead sits directly in a verdict path. The historical impact is zero precisely because the leg was broken; fixing the leg is what activates the risk."
+  },
+  "Q2b_PROSPECTIVE_MAGNITUDE": {
+    "question": "How many names does the FUTURE half of the window add or remove -- and why?",
+    "pit_construction": {
+      "tufe_deflator_at_d0": 8.7869,
+      "floor_in_d0_TL": 227611.0,
+      "floor_in_end_of_window_TL": 2000000.0,
+      "past_coverage_window": [
+        "2019-01-02",
+        "2019-07-03"
+      ],
+      "n_liquid_at_d0": 305
+    },
+    "n_shipped_window_rule": 231,
+    "n_pit_rule": 303,
+    "n_intersection": 205,
+    "admitted_ONLY_because_of_the_peek": 26,
+    "excluded_ONLY_because_of_the_peek": 98,
+    "HEADLINE": "The window rule is MORE restrictive than the point-in-time rule (231 vs 303). The dominant channel is therefore NOT 'late-liquid names sneak in' -- it is 'names that later died or dried up are thrown out'. That is the survivorship direction, and it is ~4x larger than the admission channel.",
+    "of_the_peek_ADMITTED_26": {
+      "not_even_trading_at_d0": 1,
+      "trading_but_below_the_real_floor_at_d0": 23,
+      "reading": "names the engine could not have known were tradable at d0; they are in the universe BECAUSE they later became liquid (late-liquidity selection)."
+    },
+    "of_the_peek_EXCLUDED_98_channel_attribution": {
+      "attendance_below_95pct_over_the_window (delisted / halted out)": 39,
+      "of_those_stopped_trading_more_than_6_months_before_d1": 30,
+      "attendance_ok_but_window_median_liquidity_fell_under_the_floor (dried up)": 59,
+      "unattributed": 0,
+      "reading": "These are the CASUALTIES. They were tradable at d0 by a look-ahead-free measure, and the window rule removes them because of what happened AFTERWARDS. A universe built this way is, by construction, a universe of survivors."
+    },
+    "share_of_the_universe_that_is_peek_dependent": 0.1126,
+    "share_of_the_PIT_universe_removed_by_the_peek": 0.3234
+  },
+  "Q2c_DOES_THE_ANSWER_MOVE": {
+    "question": "Does removing the peek change what Mod-A SAYS? The claim under test is: 'symmetric across arms + no return data => cannot manufacture an agreement.'",
+    "scope_guard": "hi52 is used as a known-answer PROBE. This measures the INSTRUMENT's sensitivity to the peek. It is NOT a re-adjudication of hi52, whose closure rests on the independent D-208 fair-cost screening path. No verdict about any candidate is produced here.",
+    "with_peek_shipped_universe": {
+      "n_names_in_panel": 231,
+      "agreement_measured": true,
+      "agreement_pass": true,
+      "agreement_t_cross_median": 2.7787,
+      "sign_consistency": 1.0,
+      "pbo_real_cscv": 0.0,
+      "agreement_confidence": "high",
+      "guard_messages": [
+        "TLREF floor window [2019-07-03, 2026-04-22] straddles the pre-2022-07 silent-NaN region (d213 precedent); floor falls back to TUFE-only for this window."
+      ]
+    },
+    "without_peek_pit_universe": {
+      "n_names_in_panel": 303,
+      "agreement_measured": true,
+      "agreement_pass": true,
+      "agreement_t_cross_median": 2.8268,
+      "sign_consistency": 1.0,
+      "pbo_real_cscv": 0.0,
+      "agreement_confidence": "high",
+      "guard_messages": [
+        "TLREF floor window [2019-07-03, 2026-04-22] straddles the pre-2022-07 silent-NaN region (d213 precedent); floor falls back to TUFE-only for this window."
+      ]
+    }
+  },
+  "Q3_PORTABILITY": {
+    "question": "Is this caveat BIST-local, or a portable defect that travels to the US track?",
+    "evidence": {
+      "ADR-0002 decision": "'Expand into US micro-cap long-only systematic research as a new track (RR-Y3)... Phases run data-feasibility -> INFRASTRUCTURE PORT -> universe and data-quality probes -> pre-registered measurement.' Consequences: 'reuse of the MARKET-AGNOSTIC ENGINE in a second market.'",
+      "where_the_defect_lives": "src/engine/moda.py::_eligible_names -- inside the market-agnostic engine, not in any BIST-specific screening module. It takes a Panel and knows nothing about BIST."
+    },
+    "ANSWER": "PORTABLE DEFECT, not a BIST-local quirk. It ports by construction: the engine is what gets ported.",
+    "and_it_is_WORSE_in_the_target_market": "US micro-cap is exactly the population where a window-median liquidity filter plus an attendance filter is most dangerous: delisting rates are high and liquidity is born and dies within the window. Selecting names on [d0,d1] liquidity there systematically keeps the survivors and the late-liquid, which is the textbook survivorship trap the US track's whole thesis (institutional exclusion below liquidity thresholds) sits on top of. The one component that does NOT port is the TUFE indexing (D1b): with US CPI at ~2-3%/yr the deflator is ~1.0 and that fix is a near-no-op -- so the US port would inherit the look-ahead WITHOUT the inflation problem that motivated it.",
+    "implication_for_sequencing": "ADR-0002 lists 'universe and data-quality probes' as a phase BEFORE pre-registered measurement. That is the correct place to fix this -- but only if the fix is known to be needed BEFORE the port, not discovered after."
+  }
+}
