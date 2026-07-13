@@ -65,6 +65,14 @@ _DEPTH_FRACTION: dict[SortDepth, float] = {
 _TAX_ANN = float(_costcfg.D203_DIV_WITHHOLDING * _costcfg.D203_ASSUMED_ANNUAL_DIV_YIELD)
 
 
+def _annualizer(yr: float, h: int) -> float:
+    """Annualizer for a return series of h-day OVERLAPPING returns sampled daily (D2).
+
+    h == 1 -> yr (unchanged). h > 1 -> yr / h.
+    """
+    return yr / float(max(1, int(h)))
+
+
 @dataclass(frozen=True)
 class _ReturnsCost:
     """Tradeable returns/cost sub-vector + the daily active series it was built from
@@ -80,11 +88,66 @@ class _ReturnsCost:
     active: pd.Series
     d0: pd.Timestamp | None
     d1: pd.Timestamp | None
+    ann: float = config.TRADING_DAYS_YR  # D2: the horizon-correct annualizer actually used
+    # D3: the EW-universe benchmark the tilt is measured AGAINST. The strategy's TOTAL
+    # nominal return is bench_ann + net_active_ann -- that, not the active spread, is what
+    # the max(TUFE, TLREF) floor must judge.
+    bench_ann: float = float("nan")
 
 
 # --------------------------------------------------------------------------- #
 # headline tradeable tilt (long-only top-frac EW minus universe-EW)            #
 # --------------------------------------------------------------------------- #
+def _tilt_active_full(
+    panel: Panel,
+    signal: Signal,
+    *,
+    frac: float,
+    h: int,
+    basis: str,
+    min_names: int,
+) -> tuple[pd.Series, pd.Series, pd.DataFrame, list[str]]:
+    """As ``_tilt_active``, but ALSO returns the EW-universe benchmark series.
+
+    RR-Y1-028 (D3): the benchmark leg was always computed here and then thrown away, which
+    is why the benchmark-floor gate had nothing but the ACTIVE spread to work with -- and
+    deflating a spread by CPI is a category error. The strategy's TOTAL return is
+    ``bench + net_active``; that is the quantity the floor must judge.
+
+    Kept as a SEPARATE function so ``_tilt_active``'s committed 3-tuple contract is
+    untouched (it is imported by committed scripts: scripts/verification/verify_pead_stage0.py,
+    scripts/scratch/run_rr_y1_014_stage0.py). Strangler, ADR-0005.
+
+    Returns (active, bench, is_top, held_names).
+    """
+    dates = panel.dates
+    fwd = forward_return(panel, h, basis=basis)
+    scores = pd.DataFrame.from_dict(
+        {asof: signal.scores(panel, panel.names, asof) for asof in dates}, orient="index"
+    )
+    mask = scores.notna() & fwd.notna()
+    counts = mask.sum(axis=1)
+    valid = counts >= min_names
+    if not bool(valid.any()):
+        return pd.Series(dtype=float), pd.Series(dtype=float), pd.DataFrame(), []
+
+    sc, fr, mk, cnt = scores[valid], fwd[valid], mask[valid], counts[valid]
+    ranks = sc.where(mk).rank(axis=1, ascending=False, method="first")
+    k = (cnt * frac).apply(lambda c: max(1, int(c)))
+    is_top = ranks.le(k, axis=0) & mk
+
+    first = is_top.index[0]
+    top0 = is_top.columns[is_top.loc[first].to_numpy()]
+    assert_pm1_compliant(pd.Series(1.0 / len(top0), index=top0), name=signal.name)
+
+    port = fr.where(is_top).mean(axis=1)
+    bench = fr.where(mk).mean(axis=1)
+    active = (port - bench).dropna().sort_index()
+    bench_s = bench.reindex(active.index)
+    held = sorted({str(c) for c in is_top.columns[is_top.any(axis=0).to_numpy()]})
+    return active, bench_s, is_top, held
+
+
 def _tilt_active(
     panel: Panel,
     signal: Signal,
@@ -100,31 +163,13 @@ def _tilt_active(
     PM-1 compliant by construction (a fully-invested long-only EW re-tilt; the
     EW-universe leg is a benchmark, not a short) -- asserted once on the first
     eval date. A universe that never clears the cross-section floor yields an
-    empty series (the caller degrades to NaN, never raises)."""
-    dates = panel.dates
-    fwd = forward_return(panel, h, basis=basis)
-    scores = pd.DataFrame.from_dict(
-        {asof: signal.scores(panel, panel.names, asof) for asof in dates}, orient="index"
+    empty series (the caller degrades to NaN, never raises).
+
+    COMMITTED CONTRACT -- 3-tuple, unchanged (committed scripts import this). The
+    benchmark-carrying variant is ``_tilt_active_full``."""
+    active, _bench, is_top, held = _tilt_active_full(
+        panel, signal, frac=frac, h=h, basis=basis, min_names=min_names
     )
-    mask = scores.notna() & fwd.notna()
-    counts = mask.sum(axis=1)
-    valid = counts >= min_names
-    if not bool(valid.any()):
-        return pd.Series(dtype=float), pd.DataFrame(), []
-
-    sc, fr, mk, cnt = scores[valid], fwd[valid], mask[valid], counts[valid]
-    ranks = sc.where(mk).rank(axis=1, ascending=False, method="first")
-    k = (cnt * frac).apply(lambda c: max(1, int(c)))
-    is_top = ranks.le(k, axis=0) & mk
-
-    first = is_top.index[0]
-    top0 = is_top.columns[is_top.loc[first].to_numpy()]
-    assert_pm1_compliant(pd.Series(1.0 / len(top0), index=top0), name=signal.name)
-
-    port = fr.where(is_top).mean(axis=1)
-    bench = fr.where(mk).mean(axis=1)
-    active = (port - bench).dropna().sort_index()
-    held = sorted({str(c) for c in is_top.columns[is_top.any(axis=0).to_numpy()]})
     return active, is_top, held
 
 
@@ -171,24 +216,41 @@ def _mean_round_trip_frac(panel: Panel, held: list[str], rebal: list[pd.Timestam
 
 
 def _returns_cost(panel: Panel, signal: Signal, spec: SplitSpec, dial: DialConfig) -> _ReturnsCost:
-    """Assemble the tradeable gross/net/cost/tax/mean_rt + headline NW-t sub-vector."""
+    """Assemble the tradeable gross/net/cost/tax/mean_rt + headline NW-t sub-vector.
+
+    RR-Y1-028 (D2) -- ANNUALIZATION. ``active`` is built from ``forward_return(panel, h)``:
+    an h-day return sampled on EVERY trading day, so consecutive observations OVERLAP.
+    Its annualizer is ``252 / h``, not 252. The old code used 252, which treated an h-day
+    return as a 1-day return and inflated gross/net/real/per-regime/plateau by ~h (at h=21,
+    21x). ``cost_ann`` is NOT touched: turnover really is measured day-over-day, so 252 is
+    its correct annualizer -- which is exactly why the old ``net = gross - cost`` compared
+    two different scales.
+
+    At h == 1 the corrected annualizer is 252/1 == 252, i.e. BYTE-IDENTICAL to the old
+    behaviour. Every engine unit test and the committed PEAD Stage-0 run at h == 1, which is
+    why this never surfaced.
+    """
     frac = _DEPTH_FRACTION.get(spec.sort_depth, 1.0 / 3.0)
     h = int(signal.construction_window)
     basis = str(dial.return_basis)
-    lag = dial.nw_lag_for(panel.frequency)
+    # D2: a HAC bandwidth below h cannot absorb the overlap-induced autocorrelation.
+    lag = dial.nw_lag_for(panel.frequency, h=h)
     yr = config.TRADING_DAYS_YR
+    ann = _annualizer(yr, h)  # 252/h for the OVERLAPPING h-day return series
 
-    active, is_top, held = _tilt_active(
+    active, bench, is_top, held = _tilt_active_full(
         panel, signal, frac=frac, h=h, basis=basis, min_names=config.MIN_NAMES_CROSS_SECTION
     )
     if active.empty:
         return _ReturnsCost(
             float("nan"), float("nan"), float("nan"), _TAX_ANN, float("nan"),
-            float("nan"), 0, active, None, None,
+            float("nan"), 0, active, None, None, ann, float("nan"),
         )
 
     d0, d1 = active.index[0], active.index[-1]
-    gross_ann = float(active.mean() * yr)
+    gross_ann = float(active.mean() * ann)
+    # D3: the EW-universe benchmark, on the SAME annualizer as the active series.
+    bench_ann = float(bench.mean() * ann) if not bench.dropna().empty else float("nan")
     turnover = _one_way_turnover(is_top)
     mean_turnover = float(np.nanmean(turnover.to_numpy())) if not turnover.empty else float("nan")
     rebal = _monthly_rebal(panel.dates, d0, d1)
@@ -216,6 +278,8 @@ def _returns_cost(panel: Panel, signal: Signal, spec: SplitSpec, dial: DialConfi
         active=active,
         d0=d0,
         d1=d1,
+        ann=ann,
+        bench_ann=bench_ann,
     )
 
 
@@ -249,12 +313,19 @@ def _plateau_map(
     so neither sort_depth nor embargo_h perturbs it -- a leg re-run would return 4
     identical numbers. The tilt's gross-active DOES move with frac + horizon, so
     this grid is a real (if narrow) curve-fit probe. Documented as bounded, not a
-    full dial sweep."""
+    full dial sweep.
+
+    RR-Y1-028 (D2): each cell has its OWN horizon (hh), so each is annualized by
+    ``yr / hh``. Using one flat ``yr`` across the grid made the h and h+1 cells
+    incomparable -- the very comparison the plateau exists to make."""
     out: dict[str, float] = {}
     for depth, frac in (("tercile", 1.0 / 3.0), ("decile", 0.10)):
         for hh in (base_h, base_h + 1):
             active, _, _ = _tilt_active(panel, signal, frac=frac, h=hh, basis=basis, min_names=min_names)
-            out[f"{depth}_h{hh}"] = float(active.mean() * yr) if not active.empty else float("nan")
+            ann_hh = _annualizer(yr, hh)
+            out[f"{depth}_h{hh}"] = (
+                float(active.mean() * ann_hh) if not active.empty else float("nan")
+            )
     return out
 
 
@@ -327,29 +398,48 @@ def harness(
     if rc.n_obs == 0:
         guards.append("headline tilt: no eval date cleared the cross-section floor; returns are NaN")
 
-    # --- benchmark floor (real net active vs max(TUFE, TLREF); deflate by TUFE) ---
+    # --- benchmark floor (D3: the strategy's TOTAL return vs max(TUFE, TLREF)) ---
     if rc.d0 is not None and rc.d1 is not None:
-        bf = benchmark_floor(rc.net_active_ann, panel, rc.d0, rc.d1)
-        out.real_active_ann = bf.real_active_ann
+        # PM-1 (ADR-0008): the strategy IS the fully-invested EW universe, re-tilted. Its
+        # TOTAL nominal return is therefore the EW benchmark plus the net active spread.
+        # Judging the spread alone against an inflation floor (the pre-RR-Y1-028 behaviour)
+        # asked the tilt to beat its own benchmark by more than inflation.
+        total_ann = (
+            float(rc.bench_ann + rc.net_active_ann)
+            if np.isfinite(rc.bench_ann) and np.isfinite(rc.net_active_ann)
+            else float("nan")
+        )
+        bf = benchmark_floor(
+            total_ann, panel, rc.d0, rc.d1, nominal_active_ann=rc.net_active_ann
+        )
+        out.benchmark_ew_ann = rc.bench_ann
+        out.strategy_total_ann = total_ann
+        out.real_total_ann = bf.real_total_ann
+        out.real_active_ann = bf.real_active_ann  # RETAINED, descriptive (D3)
         out.benchmark_floor_ann = bf.benchmark_floor_ann
+        out.benchmark_floor_real_ann = bf.benchmark_floor_real_ann
         out.beats_benchmark_floor = bf.beats_benchmark_floor
         if bf.guard_raised:
             out.pm1_guard_raised = True
             guards.extend(bf.guard_messages)
 
     # --- per-regime + bounded plateau ---
-    out.per_regime = _per_regime(rc.active)
+    # D2: both are annualized with the HORIZON-CORRECT factor (252/h), not a flat 252.
+    out.per_regime = _per_regime(rc.active, yr=rc.ann)
     out.plateau_map = _plateau_map(
         panel, signal,
         base_h=int(signal.construction_window),
         basis=str(dial_config.return_basis),
         min_names=config.MIN_NAMES_CROSS_SECTION,
-        yr=config.TRADING_DAYS_YR,
+        yr=config.TRADING_DAYS_YR,  # _plateau_map derives 252/hh per cell
     )
 
     # --- Mod-A conjugate (kept SEPARATE per Section 4.3) + real CSCV PBO ---
     if moda_res is not None:
-        out.agreement_pass = cast("bool", moda_res["agreement_pass"])
+        # RR-Y1-028 (D1d): agreement_pass is TRI-STATE -- None means the leg never ran.
+        # It must NOT be cast to bool here, or "not measured" collapses back into "failed".
+        out.agreement_pass = cast("bool | None", moda_res["agreement_pass"])
+        out.agreement_measured = cast("bool", moda_res["agreement_measured"])
         out.agreement_t_cross_median = cast("float", moda_res["agreement_t_cross_median"])
         out.sign_consistency = cast("float", moda_res["sign_consistency"])
         out.residual_cross_sectional_corr = cast("float", moda_res["residual_cross_sectional_corr"])
@@ -358,7 +448,17 @@ def harness(
         out.agreement_confidence_reasons = cast(
             "tuple[str, ...]", moda_res["agreement_confidence_reasons"]
         )
+        # The REAL CSCV PBO only exists when the leg ran. The emitted VALUE is left
+        # exactly as before (NaN from the guard) -- D1d is strictly non-behaviour-changing
+        # on the engine's numbers; the honest distinction is carried by the new
+        # ``pbo_measured`` flag and adjudicated in ``keep_bar.py``. (Deliberate: writing
+        # None here would newly activate the Mod-B proxy fallback below, which today is
+        # unreachable because the guard writes NaN, not None. That is a separate finding,
+        # out of scope for RR-Y1-028.)
         out.pbo = cast("float", moda_res["pbo"])
+        out.pbo_measured = bool(
+            out.agreement_measured and out.pbo is not None and np.isfinite(out.pbo)
+        )
         guards.extend(cast("tuple[str, ...]", moda_res.get("guard_messages", ())))
 
     # --- Mod-B temporal overfit measures (DSR + proxy PBO when A absent) ---
@@ -373,6 +473,9 @@ def harness(
             )
         if out.pbo is None:
             out.pbo = cast("float", modb_res["pbo"])
+            # RR-Y1-028 (D1d): the proxy IS a measurement (a weaker one), so it counts as
+            # measured -- the note below already declares which estimator produced it.
+            out.pbo_measured = bool(out.pbo is not None and np.isfinite(out.pbo))
             notes.append(
                 "pbo is the Mod-B simplified proxy P(OOS Sharpe < 0), NOT the real "
                 "CSCV median-rank (no Mod-A leg in this run)"

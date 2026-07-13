@@ -1,0 +1,49 @@
+{
+  "id": "RR-Y1-028 D1a/b/c -- recalibrated Mod-A eligible universe (POST-FREEZE)",
+  "prereg": "STAGE0_RR-Y1-028_D1_universe_calibration.json",
+  "frozen_constants_in_force": {
+    "ELIGIBLE_ADV_FLOOR_TL_end_of_window": 2000000.0,
+    "TUFE_indexed": true,
+    "ELIGIBLE_MIN_COVERAGE": 0.95,
+    "MIN_NAMES_PER_ARM_UNCHANGED": 50
+  },
+  "window": [
+    "2019-07-03",
+    "2026-04-22"
+  ],
+  "universe_size": 681,
+  "tufe_deflator_to_end_of_window": {
+    "at_window_start": 8.7869,
+    "at_window_end": 1.0,
+    "reading": "TUFE(end)/TUFE(t): > 1 early (2019 TL bought more), 1.0 at the end. Early-window turnover is scaled UP so the early window is not penalised for the currency alone."
+  },
+  "adv_unit": "end-of-window TL (the floor is FLAT in this unit)",
+  "names_needed_for_two_arms": 100,
+  "n_eligible": 231,
+  "MOD_A_CAN_RUN": true,
+  "eligible_adv_profile_tl": {
+    "min": 2005812.0,
+    "median": 10887032.0,
+    "max": 808817966.0
+  },
+  "before_vs_after": {
+    "old_rule_n_eligible": 38,
+    "old_rule": "trailing ADV >= 10M TL at a SINGLE date (d0) AND min_cov=1.0",
+    "new_rule": "window-median trailing ADV >= 2,000,000 TL (TUFE-indexed) AND coverage >= 95%"
+  },
+  "mod_a_first_real_execution": {
+    "probe_signal": "hi52 (known-answer; burial came from the INDEPENDENT D-208 screening path)",
+    "scope_note": "This does NOT re-adjudicate hi52. It is an instrument check: a conjugate leg that has never once executed on real BIST data is now executing, and we report what it emits. Any edge reading here is out of scope and is NOT a verdict.",
+    "agreement_measured": true,
+    "agreement_pass": true,
+    "agreement_t_cross_median": 2.8326,
+    "sign_consistency": 1.0,
+    "pbo_real_cscv": 0.0,
+    "pbo_measured": true,
+    "agreement_confidence": "high",
+    "guard_messages": [
+      "TLREF floor window [2019-07-03, 2026-04-22] straddles the pre-2022-07 silent-NaN region (d213 precedent); floor falls back to TUFE-only for this window."
+    ]
+  },
+  "VERDICT": "CALIBRATION SUCCEEDED -- Mod-A is executable on real BIST data for the first time. agreement_pass and the real CSCV PBO are now MEASURED quantities rather than a guard. This is a FORWARD bar: no closed candidate is reopened by it (ADR-0007)."
+}

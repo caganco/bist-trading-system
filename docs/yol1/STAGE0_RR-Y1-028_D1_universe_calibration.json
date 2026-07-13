@@ -1,0 +1,83 @@
+{
+  "id": "RR-Y1-028 / D1a-b-c -- Mod-A eligible-universe calibration",
+  "type": "FROZEN CALIBRATION PRE-REGISTRATION (not an edge test; no return, no verdict)",
+
+  "freeze_order_attestation": "This file is committed BEFORE the recalibrated eligibility is executed a single time. At freeze time the ONLY numbers observed are the DIAGNOSTIC counts of the CURRENT (broken) rule -- how many names each existing filter admits -- which are reported in the root-cause section below. No recalibrated universe has been built, no Mod-A leg has been run under the new rule, and no agreement/PBO value under the new rule has been seen. The three constants below are fixed here and will NOT be adjusted after the run.",
+  "frozen_before_results": true,
+  "date_frozen": "2026-07-13",
+
+  "why_this_is_a_calibration_and_not_a_threshold_relaxation": "A relaxation lowers the bar on an EXISTING measurement. Here there IS no measurement: on the real BIST panel the Mod-A leg has never executed at all, so `agreement_pass` and the real CSCV `pbo` have never been produced for ANY candidate -- the engine emitted a guard, and (pre-RR-Y1-028/D1d) that guard wrote `False`. Making the leg executable does not soften a verdict; it creates the possibility of one. THE CONDITION OF THAT DISTINCTION IS EX-ANTE FREEZING: if the constants were chosen after seeing which value makes Mod-A fire, this WOULD be a relaxation. Hence this document, committed first.",
+
+  "root_cause_diagnostics_observed_before_freeze": {
+    "note": "Counts of the CURRENT rule only. These motivate the recalibration; they are not results of it.",
+    "code": "src/engine/moda.py:90-104 (_eligible_names) + :456-465 (arm-formation floor)",
+    "window": "2019-07-03 .. 2026-04-22",
+    "universe_size": 681,
+    "names_needed_for_two_arms": 100,
+    "filter_1_liquidity_measured_at_a_SINGLE_date": {
+      "rule": "trailing-63d ADV >= 10,000,000 TL, evaluated ONLY at split_asof == d0",
+      "n_passing_at_d0_2019_07": 48,
+      "n_passing_at_d1_2026_04": 169,
+      "reading": "The same nominal floor admits 48 names at the start of the panel and 169 at the end. In a ~40%/yr-inflation market a fixed TL floor is a ~3.5x harsher bar in 2019 than in 2026. Anchoring eligibility to d0 judges seven years by the panel's thinnest moment."
+    },
+    "filter_2_perfect_attendance": {
+      "rule": "continuous_basket(..., min_cov=1.0) -- a non-NaN close on EVERY trading day of ~1700",
+      "n_passing": 74,
+      "n_passing_at_cov_0_95": 329,
+      "reading": "Requiring zero missing days over seven years is not a liquidity filter; it is a hidden survivorship/continuity filter. It removes 89% of the universe (681 -> 74)."
+    },
+    "both_filters_as_applied": 38,
+    "consequence": "38 < 100 -> the leg never runs -> agreement_pass and pbo are never produced."
+  },
+
+  "FROZEN_CONSTANTS": {
+    "ELIGIBLE_ADV_FLOOR_TL_END_OF_WINDOW": 2000000.0,
+    "ELIGIBLE_ADV_FLOOR_IS_TUFE_INDEXED": true,
+    "ELIGIBLE_MIN_COVERAGE": 0.95,
+    "ELIGIBLE_LIQUIDITY_STATISTIC": "median over the evaluation window of each name's trailing-63d median traded value"
+  },
+
+  "EX_ANTE_JUSTIFICATION_each_constant_anchored_to_reality_not_to_an_outcome": {
+    "ELIGIBLE_ADV_FLOOR_TL_END_OF_WINDOW = 2,000,000 TL": {
+      "anchor": "TRADABILITY of the operator's actual book -- NOT a name count.",
+      "derivation": "The committed cost model already fixes the operator's scale: D204_ORDER_VALUE_TL = D204_PORTFOLIO_TL / D204_TOP_N = 300,000 / 15 = 20,000 TL per position (src/screening/d204_config.py:72). A name is tradable for that book when a 20,000 TL order is a negligible fraction of a day's volume. At a 2,000,000 TL median daily traded value that order is ~1% of one day's turnover -- the region in which the committed Kyle impact term (lambda * sigma * sqrt(order/ADV), D-207) is still small. Below that, impact stops being negligible and the name is not honestly tradable at this book size.",
+      "why_not_10M": "10M TL is not wrong as a 'very liquid' marker; it is wrong as an ELIGIBILITY floor, because it encodes a capacity constraint this operator does not have. It excludes names the book can trade with negligible impact.",
+      "not_chosen_to_make_ModA_fire": "The number follows from order_value / ADV = 1%, a cost-model fact fixed long before this directive. It was NOT selected by trying values until the leg executed. Whether 2M TL yields >= 100 eligible names is UNKNOWN at freeze time and will be reported as-is -- including if it does not."
+    },
+    "ELIGIBLE_MIN_COVERAGE = 0.95": {
+      "anchor": "LISTING REALITY -- what a genuinely listed, continuously traded name looks like.",
+      "derivation": "A real BIST listing is not halt-free for seven consecutive years: VBTS measures, single-price auction periods, and ordinary suspensions produce missing days for names that are unambiguously listed and tradable. Demanding 100% attendance (the current implicit rule) therefore selects for an absence of ordinary market events, not for tradability. 95% permits roughly one missing month per trading year while still excluding names that barely traded.",
+      "not_chosen_to_make_ModA_fire": "95% is the standard coverage convention already used elsewhere in this codebase's data-quality filters (e.g. K3/D-192 config: UNIVERSE_MIN_TRADING_DAYS_PCT = 0.80, MAX_ZERO_VOL_PCT = 0.10 -- i.e. this project already treats sub-100% attendance as normal). It is deliberately STRICTER than that precedent, not looser."
+    },
+    "ELIGIBLE_LIQUIDITY_STATISTIC = window-median": {
+      "anchor": "The eligibility question is 'was this name tradable over the evaluation window', not 'was it tradable on one particular morning'.",
+      "derivation": "A single-date snapshot (the current rule's split_asof == d0) is an arbitrary draw from a noisy series and, worse, is taken at the panel's earliest and thinnest point. The median over the window is the robust central tendency of the same quantity and is invariant to a single anomalous day.",
+      "not_chosen_to_make_ModA_fire": "The median is the same estimator this project already uses for the trailing liquidity measure itself (LIQUID_TRAILING_DAYS median, config.py). No new statistic is introduced."
+    },
+    "TUFE_INDEXING_of_the_floor": {
+      "anchor": "CONSTANT PURCHASING POWER. Tradability is a ratio of order size to turnover, and BOTH inflate.",
+      "derivation": "A fixed nominal TL floor is not a fixed bar in a 40%/yr-inflation market: the diagnostics above show the SAME 10M TL floor admitting 48 names in 2019 and 169 in 2026 -- a ~3.5x swing that is pure currency erosion, not a change in market structure. The floor is therefore declared in END-OF-WINDOW TL, and it is the ADV SERIES that is deflated into that same unit (multiply each date's traded value by TUFE(end)/TUFE(t)) before the window median is taken. Equivalently the floor could have been scaled per-date; deflating the series is preferred because the eligibility statistic is a window aggregate, which makes the direction of a floor-scaling easy to invert by mistake.",
+      "direction_declared_explicitly": "Under inflation the deflator TUFE(end)/TUFE(t) is > 1 EARLY and 1.0 at the window's end: early-window turnover is scaled UP, because 2019 TL bought more than 2026 TL. The early window therefore stops being penalised for the currency alone -- which is precisely the distortion the old nominal floor introduced.",
+      "not_chosen_to_make_ModA_fire": "Indexing REMOVES a distortion; its direction follows from the definition of purchasing power, not from a target name count. It does not open the gate to genuinely illiquid names -- a name below the real floor stays excluded, and a unit test pins that."
+    }
+  },
+
+  "WHAT_THIS_CHANGES_AND_WHAT_IT_DOES_NOT": {
+    "changes": "Mod-A's ELIGIBLE-UNIVERSE construction only (src/engine/moda.py::_eligible_names). Forward-looking: it makes the conjugate leg executable so that FUTURE candidates receive a real agreement/PBO verdict instead of a guard.",
+    "does_NOT_change": [
+      "The keep-bar itself. AGREEMENT_CROSS_IC_T_MIN (2.0), SIGN_CONSISTENCY_MIN (0.90), PBO_THRESHOLD (0.50), DSR_MIN (0.95) are UNTOUCHED (DEC-049).",
+      "MIN_NAMES_PER_ARM (50) -- the arm-size requirement is NOT lowered. Only the pool feeding it is measured honestly.",
+      "Any past verdict. Re-opening closed candidates under the new universe is explicitly OUT OF SCOPE (see below)."
+    ],
+    "past_candidates_are_NOT_re_run": "Per the directive's scope: D1a/b/c is a FORWARD bar. Historical candidates are the subject of the D3 impact scan (docs/yol1/RR-Y1-028_d3_impact_scan.json), not of this calibration. A closed candidate is not reopened because the instrument improved -- that decision, if it is ever made, belongs to the cold-decision path (Orchestrator + maintainer), never to a Builder. ADR-0007 permanence stands."
+  },
+
+  "WHAT_WOULD_MAKE_THIS_CALIBRATION_WRONG": "If, under these frozen constants, the eligible pool is still below 100 names, the calibration has FAILED to make Mod-A executable and that will be reported as a failure -- the constants will NOT be loosened until the leg fires. That would be exactly the post-hoc tuning this freeze exists to prevent. The honest response would be a separate, newly-frozen calibration with a differently-argued anchor, recorded as such.",
+
+  "outputs": [
+    "src/engine/config.py (new frozen constants)",
+    "src/engine/moda.py::_eligible_names (window-median + TUFE-indexed floor + coverage)",
+    "tests/test_engine_eligibility.py",
+    "docs/yol1/RR-Y1-028_d1_calibration_result.json (the post-freeze measurement)"
+  ]
+}

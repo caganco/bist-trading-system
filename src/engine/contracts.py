@@ -78,6 +78,12 @@ class AgreementConfidence(StrEnum):
     HIGH = "high"  # adequate breadth + adequate R + no confounded trigger
     LOW = "low"  # underpowered: per-arm names or effective R below a frozen floor
     CONFOUNDED = "confounded"  # shared-factor flag OR single-regime eval window
+    # RR-Y1-028 (D1d): the Mod-A leg never RAN (degenerate universe -- e.g. too few
+    # eligible names to form two arms). This is NOT a graded measurement; it is the
+    # ABSENCE of one. Kept distinct from LOW (an underpowered but real measurement)
+    # so a consumer can never read "could not measure" as "measured and failed".
+    # "Not detected" is not "does not exist" (ADR-0007).
+    NOT_MEASURED = "not_measured"
 
 
 class HoldoutConfidence(StrEnum):
@@ -139,7 +145,14 @@ class SplitSpec:
     seed: int = 0
     cpcv_n: int = config.CPCV_DAILY_N  # Mod-B temporal CPCV blocks
     cpcv_k: int = config.CPCV_DAILY_K
-    split_arm_floor_tl: float = config.LIQUID_ADV_MIN_TL
+    # RR-Y1-028 (D1b): the Mod-A eligibility floor. Was LIQUID_ADV_MIN_TL (1e7) -- a capacity
+    # constraint this operator does not have, which left only 38 eligible names against the 100
+    # needed for two arms, so the conjugate leg never executed on real BIST data at all. Now the
+    # tradability-anchored, TUFE-indexed ELIGIBLE_ADV_FLOOR_TL, frozen ex-ante in
+    # docs/yol1/STAGE0_RR-Y1-028_D1_universe_calibration.json. Stage-0 records this value in its
+    # `split_arm_floor` field, so any run's universe bar stays auditable.
+    # NOTE: LIQUID_ADV_MIN_TL itself is UNCHANGED and still governs data_adapter.liquid_names.
+    split_arm_floor_tl: float = config.ELIGIBLE_ADV_FLOOR_TL
     sort_depth: SortDepth = SortDepth.TERCILE
     min_names_per_arm: int = config.MIN_NAMES_PER_ARM
     name_split_method: NameSplitMethod = NameSplitMethod.LIQUIDITY  # Mod-A only (Section 3.2)
@@ -206,10 +219,24 @@ class DialConfig:
         if not (0.0 <= lo < hi <= 1.0):
             raise ValueError(f"winsorize bounds invalid: {self.winsorize}")
 
-    def nw_lag_for(self, frequency: Frequency) -> int:
+    def nw_lag_for(self, frequency: Frequency, h: int = 1) -> int:
+        """HAC bandwidth for a return series sampled at ``frequency``.
+
+        RR-Y1-028 (D2): ``h`` is the signal's construction window. When the engine scores a
+        signal against an h-day FORWARD return sampled every day, consecutive observations
+        overlap by h-1 days, and a HAC bandwidth below h cannot absorb that induced
+        autocorrelation -- the t-stat comes out too large. So the daily default widens to
+        ``max(NW_LAG_DAILY, h)``.
+
+        ``h`` defaults to 1 so existing callers that pass only ``frequency`` (Mod-A/B/C)
+        are byte-unchanged. An explicitly set ``nw_lag`` always wins (examples/rry1008
+        already passed ``nw_lag=21`` by hand for exactly this reason).
+        """
         if self.nw_lag is not None:
             return self.nw_lag
-        return config.NW_LAG_DAILY if frequency is Frequency.DAILY else config.NW_LAG_MONTHLY
+        if frequency is Frequency.DAILY:
+            return max(config.NW_LAG_DAILY, int(h))
+        return config.NW_LAG_MONTHLY
 
     def requires_market_neutralization(self, split_mode: SplitMode) -> None:
         """Section 3.5: market-beta neutralization is mandatory for Mod-A."""
@@ -234,9 +261,22 @@ class EngineOutput:
     # fair-null + mirror (bullet 3)
     null_percentile: float | None = None
     mirror_active_ann: float | None = None
-    # relative benchmark (bullet 4): real return vs max(TUFE, TLREF)
-    real_active_ann: float | None = None
-    benchmark_floor_ann: float | None = None
+    # relative benchmark (bullet 4): the strategy's TOTAL return vs max(TUFE, TLREF)
+    #
+    # RR-Y1-028 (D3): ``beats_benchmark_floor`` is now decided on the strategy's TOTAL
+    # nominal return (``benchmark_ew_ann + net_active_ann``) against the NOMINAL floor.
+    # It used to deflate the ACTIVE spread and compare that REAL number to a NOMINAL floor,
+    # which demanded a tilt beat its own EW benchmark by more than inflation.
+    #
+    # ``real_active_ann`` is RETAINED (committed field; the PEAD engine output carries it)
+    # and still means "the TUFE-deflated ACTIVE spread" -- but it is DESCRIPTIVE ONLY and is
+    # no longer what the gate judges. Read ``real_total_ann`` for the adjudicated quantity.
+    real_active_ann: float | None = None  # descriptive; NOT the gate (see D3)
+    real_total_ann: float | None = None  # NEW: TUFE-deflated TOTAL return -- the gate's subject
+    benchmark_ew_ann: float | None = None  # NEW: nominal return of the EW-universe benchmark
+    strategy_total_ann: float | None = None  # NEW: nominal benchmark_ew_ann + net_active_ann
+    benchmark_floor_ann: float | None = None  # nominal max(TUFE, TLREF)
+    benchmark_floor_real_ann: float | None = None  # NEW: the same floor, deflated
     beats_benchmark_floor: bool | None = None
     # significance (bullet 5): PBO, cut-family deflated OOS-t, DSR
     pbo: float | None = None
@@ -245,7 +285,20 @@ class EngineOutput:
     dsr_n_trials: int | None = None  # honest tried-config count fed to the DSR deflation (FAZ-4 (b))
     nw_t: float | None = None
     # conjugate agreement + residual corr (bullet 6; Section 4.1/4.2 -- kept SEPARATE)
+    #
+    # RR-Y1-028 (D1d) -- READ THIS BEFORE ADJUDICATING:
+    # ``agreement_pass`` is TRI-STATE and always was (``bool | None``):
+    #   True  -> Mod-A ran and the 3-part bar was cleared
+    #   False -> Mod-A ran and the bar was NOT cleared      (a real negative)
+    #   None  -> Mod-A did NOT run                          (NO measurement exists)
+    # Before RR-Y1-028 the degenerate-universe guard wrote ``False`` here, so a leg
+    # that never executed was indistinguishable from one that executed and failed --
+    # and every keep-bar consumer counted it as a failure. Use ``agreement_measured``
+    # (and ``pbo_measured``) to tell the two apart; ``src/engine/keep_bar.py`` does
+    # this for you. Same tri-state semantics apply to ``pbo``.
     agreement_pass: bool | None = None
+    agreement_measured: bool | None = None  # False -> the Mod-A leg never ran (NOT a failure)
+    pbo_measured: bool | None = None  # False -> no real CSCV PBO exists for this run
     agreement_t_cross_median: float | None = None  # min over both directions
     sign_consistency: float | None = None
     residual_cross_sectional_corr: float | None = None

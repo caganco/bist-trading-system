@@ -35,7 +35,14 @@ import pandas as pd
 
 from . import config
 from .confidence import assess_agreement_confidence
-from .contracts import DialConfig, NameSplitMethod, Panel, SortDepth, SplitSpec
+from .contracts import (
+    AgreementConfidence,
+    DialConfig,
+    NameSplitMethod,
+    Panel,
+    SortDepth,
+    SplitSpec,
+)
 from .data_adapter import continuous_basket, forward_return
 from .neutralizer import market_neutral_forward
 from .pbo import cscv_pbo
@@ -87,6 +94,64 @@ def _trailing_adv(panel: Panel, names: list[str], asof: pd.Timestamp, *, trailin
     return window.median(skipna=True)
 
 
+def _real_adv_deflator(panel: Panel, names: list[str], d1: pd.Timestamp) -> pd.Series:
+    """Per-date factor converting NOMINAL traded value into END-OF-WINDOW TL: TUFE(d1)/TUFE(t).
+
+    RR-Y1-028 (D1b). Tradability is a ratio of order size to turnover, and BOTH inflate. A fixed
+    NOMINAL TL floor is therefore not a fixed bar in a ~40%/yr-inflation market: the same 10M TL
+    floor admitted 48 names in 2019-07 and 169 in 2026-04 -- a ~3.5x swing that is pure currency
+    erosion, not a change in market structure.
+
+    Rather than scaling the floor (which invites a sign error, because the eligibility statistic
+    is itself a window aggregate), the ADV SERIES is deflated to a single, unambiguous unit --
+    end-of-window TL -- and compared against a flat floor declared in that same unit. Early-window
+    turnover is scaled UP (2019 TL bought more), so the early window is no longer penalised for
+    the currency alone.
+
+    Returns all-ones when TUFE is unavailable: the guard never fabricates a deflator.
+    """
+    idx = panel.value_tl.loc[:, names].index
+    if panel.tufe is None or panel.tufe.dropna().empty:
+        return pd.Series(1.0, index=idx)
+    try:
+        lvl_end = float(panel.tufe.asof(d1))
+    except (KeyError, TypeError, ValueError):
+        return pd.Series(1.0, index=idx)
+    if not np.isfinite(lvl_end) or lvl_end <= 0.0:
+        return pd.Series(1.0, index=idx)
+    lvl_t = panel.tufe.reindex(idx, method="ffill").astype(float)
+    factor = lvl_end / lvl_t
+    return factor.where(np.isfinite(factor) & (factor > 0.0), 1.0)
+
+
+def _window_median_adv(
+    panel: Panel,
+    names: list[str],
+    d0: pd.Timestamp,
+    d1: pd.Timestamp,
+    *,
+    trailing: int,
+    tufe_indexed: bool = config.ELIGIBLE_ADV_FLOOR_TUFE_INDEXED,
+) -> pd.Series:
+    """Median, over [d0, d1], of each name's trailing-``trailing``-day median traded value,
+    expressed in END-OF-WINDOW TL when ``tufe_indexed`` (RR-Y1-028, D1a + D1b).
+
+    D1a: the eligibility question is "was this name tradable over the evaluation window", not
+    "was it tradable on one particular morning". The previous rule sampled the trailing ADV at a
+    SINGLE date (``split_asof == d0``) -- an arbitrary draw, taken at the panel's earliest and
+    thinnest point, which then judged seven years.
+
+    Look-ahead-safe: every value is a TRAILING median, and eligibility is a universe-definition
+    step (it selects WHICH names are split into arms), not a per-date trading decision.
+    """
+    v = panel.value_tl[names].astype(float)
+    if tufe_indexed:
+        v = v.mul(_real_adv_deflator(panel, names, d1), axis=0)
+    trail = v.rolling(trailing, min_periods=max(5, trailing // 3)).median()
+    win = trail.loc[(trail.index >= d0) & (trail.index <= d1)]
+    return win.median(skipna=True)
+
+
 def _eligible_names(
     panel: Panel,
     names: list[str],
@@ -96,12 +161,35 @@ def _eligible_names(
     *,
     floor_tl: float,
     trailing: int,
+    min_coverage: float = config.ELIGIBLE_MIN_COVERAGE,
+    tufe_indexed: bool = config.ELIGIBLE_ADV_FLOOR_TUFE_INDEXED,
 ) -> list[str]:
-    """Names that clear the liquidity floor as-of the split AND trade continuously
-    over the evaluation window (survivorship-honest)."""
-    adv = _trailing_adv(panel, names, split_asof, trailing=trailing)
+    """Names tradable over the evaluation window (RR-Y1-028, D1a/b/c).
+
+    Frozen ex-ante in docs/yol1/STAGE0_RR-Y1-028_D1_universe_calibration.json. Three defects
+    are corrected together, because each one alone still left the pool below the arm-formation
+    floor (48 / 74 / 38 names against the 100 needed -- see the pre-registration's diagnostics):
+
+      D1a  liquidity was sampled at a SINGLE date (``split_asof``) -> now the window MEDIAN.
+      D1b  the floor was a fixed NOMINAL TL constant in a ~40%/yr-inflation market -> now
+           declared in end-of-window TL and TUFE-indexed, so it asks the same REAL question.
+      D1c  ``min_cov=1.0`` demanded a non-NaN close on EVERY trading day of ~1700 -- a hidden
+           survivorship/continuity filter that removed 89% of the universe -> now
+           ``ELIGIBLE_MIN_COVERAGE``, which tolerates ordinary halts/VBTS suspensions.
+
+    ``split_asof`` is retained in the signature (committed callers pass it) but no longer
+    selects the liquidity sample; it is kept so the call sites need not change.
+
+    The floor is FLAT and declared in end-of-window TL; it is the ADV that is deflated into that
+    unit (see ``_real_adv_deflator``). Scaling the floor instead would work too, but the
+    eligibility statistic is a window aggregate, so which direction to scale is easy to get
+    backwards -- deflating the series removes the ambiguity.
+    """
+    adv = _window_median_adv(
+        panel, names, d0, d1, trailing=trailing, tufe_indexed=tufe_indexed
+    )
     liquid = [str(n) for n in adv[adv >= floor_tl].dropna().index]
-    return continuous_basket(panel, d0, d1, names=liquid, min_cov=1.0)
+    return continuous_basket(panel, d0, d1, names=liquid, min_cov=min_coverage)
 
 
 def _pair_randomize(ranked: list[str], rng: np.random.Generator) -> tuple[list[str], list[str]]:
@@ -357,6 +445,7 @@ def conjugate_agreement(
     )
     return {
         "agreement_pass": agreement_pass,
+        "agreement_measured": True,  # RR-Y1-028 (D1d): a real measurement was produced
         "agreement_t_cross_median": agreement_t_cross_median,
         "median_t_x1": median_t_x1,
         "median_t_x2": median_t_x2,
@@ -366,8 +455,20 @@ def conjugate_agreement(
 
 
 def _agreement_guard() -> dict[str, object]:
+    """RR-Y1-028 (D1d): the NOT-MEASURED result -- the Mod-A leg could not run.
+
+    This used to return ``agreement_pass=False``, which made a leg that NEVER
+    EXECUTED indistinguishable from one that executed and failed its bar. Every
+    downstream keep-bar then counted the absence of a measurement as a failed
+    measurement, so every candidate lost this gate for free -- on real BIST data the
+    leg has, in practice, never fired at all (RR-Y1-028 D1a/b/c).
+
+    "Not detected" is not "does not exist" (ADR-0007). The verdict fields are now
+    ``None`` (no measurement) rather than ``False`` (a negative measurement).
+    """
     return {
-        "agreement_pass": False,
+        "agreement_pass": None,
+        "agreement_measured": False,
         "agreement_t_cross_median": float("nan"),
         "median_t_x1": float("nan"),
         "median_t_x2": float("nan"),
@@ -522,23 +623,20 @@ def run_moda(
 
 
 def _guard_result(guards: list[str]) -> dict[str, object]:
-    """Uniform degenerate-universe result: every verdict False/NaN + the reasons."""
-    # A degenerate universe never formed valid arms -> the same helper, fed the
-    # zero-breadth inputs, naturally grades it 'low' (arm=0/R=0). No special-casing.
-    confidence, confidence_reasons = assess_agreement_confidence(
-        min_arm_size=0,
-        n_splits=0,
-        residual_corr_flag=False,
-        single_regime=False,
-        arm_floor=config.AGREEMENT_MIN_ARM_FOR_HIGH_CONFIDENCE,
-        r_floor=config.AGREEMENT_MIN_R_FOR_HIGH_CONFIDENCE,
-    )
+    """Uniform degenerate-universe result: NO measurement + the reasons why.
+
+    RR-Y1-028 (D1d): this path previously graded itself ``LOW`` by feeding zero-breadth
+    inputs (arm=0/R=0) to ``assess_agreement_confidence``. But ``LOW`` means "an
+    underpowered measurement was made"; here NO measurement was made at all. The two
+    are now distinct: ``NOT_MEASURED`` carries the guard reasons verbatim, so a reader
+    sees WHY the leg never ran instead of a synthetic "arm=0 < 50" grade.
+    """
     return {
         **_agreement_guard(),
         "residual_cross_sectional_corr": float("nan"),
         "residual_corr_flag": False,
-        "agreement_confidence": confidence,
-        "agreement_confidence_reasons": confidence_reasons,
+        "agreement_confidence": AgreementConfidence.NOT_MEASURED,
+        "agreement_confidence_reasons": tuple(guards),
         "n_splits": 0,
         "min_arm_size": 0,
         "guard_messages": tuple(guards),

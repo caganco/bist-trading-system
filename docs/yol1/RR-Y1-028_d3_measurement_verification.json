@@ -1,0 +1,55 @@
+{
+  "id": "RR-Y1-028 D3 measurement-verification (differential + mechanical proof + sanity)",
+  "1_mechanical_proof_root_cause": {
+    "source": "docs/yol1/RR-Y1-014_engine_output.json :: full_panel_engine_output (COMMITTED)",
+    "recorded_net_active_ann": -0.07283490502363017,
+    "recorded_real_active_ann": -0.3301359003810652,
+    "recorded_benchmark_floor_ann": 0.3841092476874126,
+    "implied_deflator_if_input_was_net_active": 0.384109,
+    "identity_(1+net)/(1+tufe)-1 == real_active": true,
+    "VERDICT": "CONFIRMED -- the deflator's input WAS the active spread (a difference), and the result was then compared against the NOMINAL floor. Root cause established from the committed record itself, not from a claim."
+  },
+  "2_differential": {
+    "what_changed": "ONLY the quantity handed to benchmark_floor (active spread -> total return)",
+    "rc_vector_untouched_by_the_fix": {
+      "gross_active_ann": 0.009758640206122151,
+      "net_active_ann": -0.034628750900014535,
+      "cost_ann": 0.03988739110613669,
+      "tax_ann": 0.0045,
+      "mean_rt_bps": 129.9063355373642,
+      "nw_t": 0.6740909757299329,
+      "n_obs": 1847
+    },
+    "floor_inputs_unchanged": true,
+    "tufe_ann": 0.351215,
+    "benchmark_floor_ann_nominal": 0.351215,
+    "benchmark_ew_ann": 0.533565,
+    "strategy_total_ann_nominal": 0.498936,
+    "OLD": {
+      "input_to_floor": "net_active_ann (a DIFFERENCE)",
+      "deflated_value": -0.285553,
+      "compared_against": "NOMINAL floor",
+      "beats_benchmark_floor": false
+    },
+    "NEW": {
+      "input_to_floor": "benchmark_ew_ann + net_active_ann (a TOTAL)",
+      "real_total_ann": 0.109325,
+      "benchmark_floor_real_ann": 0.0,
+      "compared_against": "NOMINAL floor (real-vs-real gives the identical boolean)",
+      "beats_benchmark_floor": true
+    },
+    "real_vs_real_agrees_with_nominal_vs_nominal": true,
+    "difference_is_confined_to_the_gate": true
+  },
+  "3_sanity": {
+    "case": "EW benchmark +60%/yr nominal; tilt adds +5%/yr net active; real BIST TUFE window",
+    "tufe_ann": 0.3511,
+    "benchmark_floor_ann": 0.3511,
+    "OLD_recorded_real_active_ann": -0.2228,
+    "OLD_beats_benchmark_floor": false,
+    "NEW_strategy_total_ann": 0.65,
+    "NEW_beats_benchmark_floor": true,
+    "VERDICT": "PASS -- a healthy tilt is no longer auto-failed by the floor gate."
+  },
+  "ALL_CHECKS_PASS": true
+}
