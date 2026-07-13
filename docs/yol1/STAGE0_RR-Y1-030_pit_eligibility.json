@@ -1,0 +1,91 @@
+{
+  "id": "RR-Y1-030 -- Mod-A eligibility: point-in-time (look-ahead-safe) rewrite",
+  "type": "FROZEN SPEC + DIRECTION PRE-REGISTRATION (not an edge test; no candidate re-adjudicated)",
+  "class": "look-ahead-safety fix. NOT an ADR-0005 math-bug exception -- the old arithmetic was correct, the INFORMATION SET was not. Strangler + additive discipline applies unchanged.",
+
+  "freeze_order_attestation": "Written and committed BEFORE the new eligibility rule is executed once. The expected universe size below is NOT a prediction made by this directive: it was measured INDEPENDENTLY in RR-Y1-029, a separate READ-ONLY diagnostic that ran before this fix existed. That is deliberate -- the D1b lesson is that a test written alongside a fix can encode the fix's own error (in D1b the test asserted the INVERTED direction and passed). The expectation therefore comes from outside this directive.",
+  "frozen_before_results": true,
+  "date_frozen": "2026-07-13",
+
+  "THE_DEFECT": {
+    "what": "moda._eligible_names selects the Mod-A universe from (a) the MEDIAN over [d0,d1] of each name's trailing-63d traded value and (b) attendance over [d0,d1]. Both read the FUTURE half of the evaluation window relative to the split date.",
+    "consequence_measured_in_RR_Y1_029": "the universe is a universe of SURVIVORS. Against a point-in-time rule it throws out 98 names -- 39 delisted/halted out (attendance < 95%) and 59 that dried up (liquidity fell under the floor) -- and admits 26 that only became liquid later. Nothing unattributed.",
+    "where_it_reaches_a_verdict": "Mod-A only (agreement_pass / sign_consistency / real CSCV pbo). Mod-C touches the same helper but feeds only the ADDITIVE holdout_confidence qualifier, which by construction cannot move a pass/fail. Mod-B and the returns/cost path (where EVERY committed verdict was decided, on NW-t) do not use it at all.",
+    "historical_contamination": "ZERO, measured in RR-Y1-029: no committed verdict placed agreement/pbo in its keep-bar, and Mod-A could not execute on the real panel anyway (38 < 100). The risk is PROSPECTIVE -- RR-Y1-028 made the leg executable, which is what activates it."
+  },
+
+  "THE_INVARIANT_being_installed": "An eligibility decision taken at time t uses ONLY information knowable at or before t. Formally: eligible(t) is a function of {value_tl(s), close(s), tufe(s) : s <= t} and frozen constants. Nothing dated after t may change it. This is asserted in code and tested by future-data injection (perturbing the panel strictly after t must leave the eligible set byte-identical).",
+
+  "DESIGN_CHOICES_and_why": {
+    "liquidity": {
+      "rule": "trailing-63d median traded value AS OF the split date (the look-ahead-safe statistic the ORIGINAL pre-RR-Y1-028 rule already used).",
+      "note": "RR-Y1-028 replaced this with a window MEDIAN spanning [d0,d1]. That was the liquidity half of the look-ahead. Reverting the statistic to trailing restores safety without touching the economics of the floor."
+    },
+    "the_floor_anchor -- THE SUBTLE PART": {
+      "problem": "ELIGIBLE_ADV_FLOOR_TL = 2,000,000 is denominated in END-OF-WINDOW TL. Comparing anything against it requires TUFE(d1) -- i.e. the future. Deflating the ADV to end-of-window TL (what RR-Y1-028 does) is therefore itself a look-ahead, even before the window-median is considered. Simply reverting the statistic would NOT have fixed this.",
+      "fix": "re-anchor the floor to a FIXED BASE DATE that is <= every decision date. floor(t) = ELIGIBLE_ADV_FLOOR_BASE_TL * TUFE(t) / TUFE(base_date). Every term is knowable at t.",
+      "economics_unchanged": "ELIGIBLE_ADV_FLOOR_BASE_TL is set so that the bar is the SAME REAL bar as the committed anchor: 2,000,000 / 8.7869 = 227,600 TL in 2019-07 TL (the CPI factor is RR-Y1-029's measured deflator). Evaluated forward it lands back at ~2.0M TL at the end of the window. This is a change of REFERENCE POINT, not of the threshold. A test pins that equivalence.",
+      "honest_note": "The CONSTANT's derivation used full-panel CPI (a one-time calibration, like any frozen threshold). The DECISION RULE at time t does not. The invariant is about the per-name selection -- which is where survivorship enters -- not about the scale of a frozen config value."
+    },
+    "coverage": {
+      "rule": "DROPPED. No attendance requirement at all.",
+      "why": "Attendance over [d0,d1] is a pure look-ahead construct: it asks whether a name will still be trading in the future. There is no look-ahead-safe version of it (a PAST-window coverage filter is also degenerate here -- the panel begins 2019-01 and d0 is 2019-07, so fewer than 252 business days exist before d0; RR-Y1-028-V/RR-Y1-029 measured that window as only ~6 months).",
+      "why_it_is_safe_to_drop": "the engine already tolerates a name that dies mid-window: moda._arm_active_series and rank_ic_series drop non-finite pairs per date, and skip dates below min_names. A casualty simply stops contributing from the day it stops trading, instead of being retroactively erased from the universe. That is the honest treatment and it is what the returns/cost path already does (it uses panel.names with a per-date mask).",
+      "risk_declared": "dropping coverage admits names with sparse histories. The liquidity floor is the guard against that (a name that barely trades cannot clear a trailing-63d median floor). Measured below."
+    },
+    "expanding_per_split_date_eligibility": {
+      "status": "NOT DONE. Out of scope, and declared.",
+      "why": "Mod-A forms its two arms ONCE, at split_asof, and holds them for the whole evaluation window -- that is the design of the conjugate test, not an accident. Recomputing eligibility per date would mean re-splitting per date, a structural change to Mod-A's contract. The look-ahead is fully closed by making the SINGLE d0 decision information-safe; an expanding universe is a different (and larger) question."
+    }
+  },
+
+  "DIRECTION_PRE_REGISTRATION -- the D1b guard": {
+    "why_this_section_exists": "In RR-Y1-028/D1b a CPI-indexing fix was very nearly shipped with the sign inverted, and the unit test written next to it ENCODED the inversion and passed. The only thing that caught it was deriving the expected magnitude independently. So the expected direction and magnitude are frozen here, from a source outside this directive.",
+    "independent_source": "docs/yol1/RR-Y1-029_eligibility_lookahead_diagnostic.json (READ-ONLY, ran before this fix existed).",
+    "EXPECTED": {
+      "direction": "the PIT universe must be LARGER than the shipped window universe. A point-in-time rule stops discarding the casualties, so it can only add them back.",
+      "shipped_window_universe": 231,
+      "expected_pit_universe": "~303 (RR-Y1-029 measured 303 with a past-coverage filter; this directive DROPS coverage, so the expected value is 303 <= n <= 310, since RR-Y1-029 also recorded n_liquid_at_d0 = 305 before its coverage step removed 2)",
+      "hard_floor": "n >= 2 * MIN_NAMES_PER_ARM = 100 (Mod-A must remain executable -- the D1 calibration RR-Y1-028 just achieved must not be undone)"
+    },
+    "STOP_CONDITIONS -- if any of these fires, the fix is WRONG and must not be shipped": [
+      "the universe SHRINKS (n < 231). That is the inverted direction: it would mean the 'point-in-time' rule is discarding MORE names than the peeking rule, which is impossible if the peek's only effect is to remove casualties. STOP and re-derive.",
+      "n < 100. Mod-A stops firing; the fix would have re-broken what RR-Y1-028 repaired. STOP.",
+      "n > 400. The universe has blown open, which would mean the liquidity floor stopped biting once coverage was dropped. STOP and investigate the floor.",
+      "the future-injection test does not catch a deliberately look-ahead-reintroducing mutation. Then the invariant is unverified and the fix proves nothing."
+    ]
+  },
+
+  "MULTI_PROBE_AND_SURVIVORSHIP -- closing RR-Y1-029's limit-1": {
+    "the_gap": "RR-Y1-029 tested whether removing the peek moves the conjugate answer using ONE probe (hi52) and found it does not (t 2.78 -> 2.83). One probe is evidence, not a theorem. hi52 is momentum-shaped; a signal correlated with SURVIVAL ITSELF was never tested, and that is exactly where a survivorship-selected universe should bite hardest.",
+    "probes": ["hi52", "mom120", "lowvol63 (the survivorship-correlated one)", "value_static"],
+    "why_lowvol63": "low realized volatility is mechanically associated with survival: names that delist or dry up are disproportionately the volatile ones. So a low-vol-shaped score should be the MOST sensitive to a universe that has had its casualties removed.",
+    "MANDATORY_PRE_CHECK -- do not assume the probe is correlated, MEASURE it": "before interpreting any null result, verify that lowvol63 IS actually correlated with survival on this panel: compare the mean lowvol63 score of the 39 delisted/halted names against the survivors. If the correlation is absent, the probe is uninformative and a NULL result proves nothing -- a different probe must be found. RR-Y1-029's own wording anticipated this: 'if there is no difference: either the signal is not correlated (verify) or the fix is incomplete (investigate)'.",
+    "expected": "NOT pre-declared as pass/fail. This is a MEASUREMENT of how much the peek matters, per probe. Whatever it shows is reported, including if it shows the peek DID matter for the survivorship-correlated probe -- which would strengthen the case for the fix, not weaken it."
+  },
+
+  "IMPACT_SCAN -- D3 discipline, measured not asserted": {
+    "question": "does this fix change any RECORDED verdict?",
+    "expected": "ZERO. RR-Y1-029 established that no committed verdict placed agreement_pass or the real CSCV pbo in its keep-bar, and that Mod-A never executed on the real panel anyway.",
+    "procedure": "re-run the full-set producer enumeration (PEAD, VIOP-K2, RR-Y1-008 x3) under the new eligibility and diff the VERDICT-BEARING fields (nw_t, gross/net_active_ann, beats_benchmark_floor, dsr). These come from the eligibility-FREE path and must be BYTE-IDENTICAL.",
+    "if_anything_moves": "STOP and report. A change would mean the eligibility rule is leaking into a path RR-Y1-029 measured as clean, which would falsify the scope finding."
+  },
+
+  "STRANGLER_DECISION": {
+    "question": "is the old _eligible_names a committed VERDICT path that must be retained additively, or may it be fixed in place?",
+    "answer": "FIXED IN PLACE, with justification: RR-Y1-029 measured that it has never contributed to a single recorded verdict (Mod-A never executed; Mod-C never ran; no keep-bar contained agreement/pbo). There is no committed result whose reproducibility depends on the old behaviour. Retaining a deprecated look-ahead-unsafe universe builder alongside the safe one would be a footgun, not a strangler -- the next caller would have two functions and no way to tell which is safe.",
+    "what_IS_retained": "the OLD window-based statistic remains reachable for diagnostics via an explicit, loudly-named parameter, so RR-Y1-029's before/after comparison stays reproducible. It is never the default, and a test pins that the default is the safe path."
+  },
+
+  "GATES": [
+    "look-ahead invariant: future-data injection must not change the eligible set (test + its mutation)",
+    "direction: universe grows to ~303 (expected from RR-Y1-029, independently); STOP conditions above",
+    "Mod-A still fires (n >= 100)",
+    "impact scan: verdict-bearing fields BYTE-IDENTICAL on all 5 committed producers",
+    "multi-probe incl. a MEASURED-survivorship-correlated signal",
+    "full suite green; MTH-golden + frictionless byte-identical; NW-t paths untouched",
+    "public-clean, closure-check"
+  ],
+
+  "OUT_OF_SCOPE": ["Mod-B (already clean: uses panel.names)", "the pbo = 0.0 diagnostic (separate)", "the moda/modb/modc HAC bandwidth at h>1 (separate)", "expanding per-split-date eligibility (declared above)"]
+}
