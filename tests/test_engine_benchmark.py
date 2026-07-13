@@ -64,7 +64,8 @@ def test_tufe_only_pre_2022_07_no_guard():
     assert bf.guard_raised is False and bf.guard_messages == ()  # by design, no guard
     assert bf.tufe_ann == pytest.approx(0.5)
     assert bf.benchmark_floor_ann == pytest.approx(0.5)
-    assert bf.real_active_ann == pytest.approx(1.8 / 1.5 - 1.0)  # (1+nominal)/(1+tufe)-1
+    # D3: the deflated quantity is now the TOTAL return, not a spread.
+    assert bf.real_total_ann == pytest.approx(1.8 / 1.5 - 1.0)  # (1+total)/(1+tufe)-1
 
 
 def test_straddle_window_raises_guard_and_falls_back_to_tufe():
@@ -110,19 +111,76 @@ def test_tufe_unavailable_makes_real_and_beats_undefined():
     panel = _panel(nan_tufe, _tlref(1.2, finite_from="2022-07-01"))
     bf = benchmark_floor(0.8, panel, pd.Timestamp("2020-01-01"), pd.Timestamp("2021-01-01"))
     assert np.isnan(bf.tufe_ann)
-    assert np.isnan(bf.real_active_ann)
+    assert np.isnan(bf.real_total_ann)
     assert np.isnan(bf.benchmark_floor_ann)
     assert bf.beats_benchmark_floor is None
     assert any("TUFE" in m for m in bf.guard_messages)
 
 
 @pytest.mark.parametrize(
-    ("nominal", "expected_beats"),
-    [(1.4, True), (0.8, False)],  # real 0.6 > floor 0.5 ; real 0.2 < floor 0.5
+    ("nominal_total", "expected_beats"),
+    [
+        (1.4, True),   # 140% nominal total vs a 50% floor -> beats
+        (0.8, True),   # 80%  nominal total vs a 50% floor -> beats
+        (0.3, False),  # 30%  nominal total vs a 50% floor -> does NOT beat
+        (0.0, False),  # flat nominal -> does NOT beat
+    ],
+    # (no "exactly at the floor" row: the floor is a CAGR carrying float noise
+    #  (0.4999999999999998), so an equality-boundary case would test float dust, not behaviour.)
 )
-def test_beats_benchmark_floor_both_directions(nominal, expected_beats):
-    bf = benchmark_floor(nominal, _default_panel(), pd.Timestamp("2020-01-01"), pd.Timestamp("2021-01-01"))
+def test_beats_benchmark_floor_both_directions(nominal_total, expected_beats):
+    """D3: like against like -- nominal TOTAL vs the nominal floor.
+
+    The (0.8, ...) row is the regression. Pre-RR-Y1-028 an 80%-nominal strategy against a
+    50% inflation floor was recorded as FAILING, because the code deflated the input
+    (0.8 -> 0.2 real) and then compared that REAL number to the NOMINAL 0.5 floor.
+    """
+    bf = benchmark_floor(
+        nominal_total, _default_panel(), pd.Timestamp("2020-01-01"), pd.Timestamp("2021-01-01")
+    )
     assert bf.beats_benchmark_floor is expected_beats
+
+
+def test_real_vs_real_agrees_with_nominal_vs_nominal():
+    """D3: deflating both sides by the same TUFE is monotone -> identical boolean.
+
+    This is the invariant the old code broke by deflating ONE side only.
+    """
+    for nominal_total in (0.2, 0.5, 0.8, 1.4):
+        bf = benchmark_floor(
+            nominal_total, _default_panel(),
+            pd.Timestamp("2020-01-01"), pd.Timestamp("2021-01-01"),
+        )
+        real_beats = bf.real_total_ann > bf.benchmark_floor_real_ann
+        assert real_beats is bf.beats_benchmark_floor
+
+
+def test_real_active_ann_is_retained_but_descriptive():
+    """D3 strangler: the committed field survives and keeps its old meaning (a deflated
+    SPREAD) -- it is simply no longer the quantity the gate judges."""
+    bf = benchmark_floor(
+        0.8, _default_panel(), pd.Timestamp("2020-01-01"), pd.Timestamp("2021-01-01"),
+        nominal_active_ann=0.05,
+    )
+    assert bf.real_active_ann == pytest.approx(1.05 / 1.5 - 1.0)
+    # ... and it is NOT what decided the verdict: the spread deflates to a NEGATIVE number,
+    # yet the strategy (80% nominal total) still beats the 50% floor.
+    assert bf.real_active_ann < 0
+    assert bf.beats_benchmark_floor is True
+
+
+def test_a_healthy_tilt_in_a_high_inflation_window_is_no_longer_auto_failed():
+    """D3 sanity (the directive's named case): a +5%/yr tilt on top of an EW benchmark
+    that itself returned 60% nominal, in a 50%-inflation window, must PASS."""
+    bench_ann, net_active_ann = 0.60, 0.05
+    bf = benchmark_floor(
+        bench_ann + net_active_ann, _default_panel(),
+        pd.Timestamp("2020-01-01"), pd.Timestamp("2021-01-01"),
+        nominal_active_ann=net_active_ann,
+    )
+    assert bf.benchmark_floor_ann == pytest.approx(0.5)
+    assert bf.beats_benchmark_floor is True          # 0.65 > 0.50
+    assert bf.real_total_ann == pytest.approx(1.65 / 1.5 - 1.0)
 
 
 def test_cagr_matches_independent_hand_computation():

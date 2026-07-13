@@ -37,6 +37,33 @@ LIQUID_ADV_MIN_TL = 1.0e7
 LIQUID_TRAILING_DAYS = 63
 TRADING_DAYS_YR = 252.0
 
+# --- Mod-A eligible-universe calibration (RR-Y1-028, D1a/b/c) ---------------------------
+# FROZEN EX-ANTE in docs/yol1/STAGE0_RR-Y1-028_D1_universe_calibration.json, committed
+# BEFORE the recalibrated universe was ever built. Read that file for the derivation; the
+# one-line version of each anchor is below. These are NOT a threshold relaxation: on the real
+# BIST panel the Mod-A leg has never executed at all (38 eligible names against the 100 needed
+# for two arms), so there was no measurement to relax -- these constants create the
+# possibility of one. The keep-bar itself (AGREEMENT_CROSS_IC_T_MIN / SIGN_CONSISTENCY_MIN /
+# PBO_THRESHOLD / DSR_MIN) and MIN_NAMES_PER_ARM are UNTOUCHED (DEC-049).
+#
+# ELIGIBLE_ADV_FLOOR_TL: TRADABILITY anchor, derived from the committed cost model, not from a
+# name count. D204_ORDER_VALUE_TL = 300_000/15 = 20_000 TL per position; at a 2M TL median
+# daily traded value that order is ~1% of one day's turnover -- the region where the committed
+# Kyle impact term is still negligible. Below it, the name is not honestly tradable at this
+# book size. Expressed in END-OF-WINDOW TL and TUFE-indexed backwards (see next constant).
+ELIGIBLE_ADV_FLOOR_TL = 2.0e6
+# A fixed NOMINAL TL floor is not a fixed bar in a ~40%/yr-inflation market: the same 10M TL
+# floor admitted 48 names in 2019-07 and 169 in 2026-04 -- a ~3.5x swing that is pure currency
+# erosion, not a change in market structure. Indexing asks the same REAL question at every date.
+ELIGIBLE_ADV_FLOOR_TUFE_INDEXED = True
+# LISTING-REALITY anchor. A real BIST listing is not halt-free for seven straight years (VBTS
+# measures, single-price auctions, ordinary suspensions). The previous implicit rule demanded
+# 100% attendance, which selects for the ABSENCE of ordinary market events rather than for
+# tradability, and removed 89% of the universe (681 -> 74). 0.95 allows ~one missing month per
+# trading year. Deliberately STRICTER than this project's own precedent (K3/D-192:
+# UNIVERSE_MIN_TRADING_DAYS_PCT = 0.80).
+ELIGIBLE_MIN_COVERAGE = 0.95
+
 # --- frozen statistical parameters (math-spec v1.1 Section 8) ---
 IC_TYPE = "spearman"  # dial 1: cross-sectional rank-IC
 MIN_NAMES_CROSS_SECTION = 30  # min names to compute IC_t for a date

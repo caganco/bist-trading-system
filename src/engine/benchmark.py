@@ -36,12 +36,23 @@ class BenchmarkFloor:
     ``tlref_ann`` is None when TLREF did not enter the floor -- either the window
     predates the clean series (by design, no guard) or the silent-NaN guard
     fired and we fell back to TUFE-only (``guard_raised`` True). ``beats_*`` is
-    None when the comparison is undefined (a non-finite real return or floor).
+    None when the comparison is undefined (a non-finite return or floor).
+
+    RR-Y1-028 (D3) -- WHAT IS JUDGED. ``beats_benchmark_floor`` compares the strategy's
+    TOTAL nominal return against the nominal floor. It used to deflate the ACTIVE
+    (excess-over-EW) return and compare that REAL spread against a NOMINAL floor -- two
+    errors compounding, which made the gate effectively unpassable in a ~38%/yr-inflation
+    window. ``real_active_ann`` is RETAINED (committed field; PEAD's output carries it) but
+    it is a descriptive quantity, NOT the adjudicated one.
     """
 
-    real_active_ann: float
-    benchmark_floor_ann: float
-    beats_benchmark_floor: bool | None
+    # --- the adjudicated quantities (D3) ---
+    real_total_ann: float  # TUFE-deflated TOTAL return of the strategy
+    benchmark_floor_ann: float  # nominal max(TUFE, TLREF)
+    benchmark_floor_real_ann: float  # the same floor, deflated -- so real-vs-real is available
+    beats_benchmark_floor: bool | None  # nominal TOTAL vs nominal floor (== real vs real)
+    # --- descriptive ---
+    real_active_ann: float  # RETAINED (D3): TUFE-deflated ACTIVE spread. NOT adjudicated.
     tufe_ann: float
     tlref_ann: float | None
     guard_raised: bool
@@ -68,17 +79,39 @@ def _cagr(level: pd.Series, d0: pd.Timestamp, d1: pd.Timestamp) -> float:
 
 
 def benchmark_floor(
-    nominal_active_ann: float,
+    nominal_total_ann: float,
     panel: Panel,
     d0: pd.Timestamp,
     d1: pd.Timestamp,
     *,
+    nominal_active_ann: float | None = None,
     tlref_from: str = config.BENCHMARK_TLREF_FROM,
 ) -> BenchmarkFloor:
-    """Real (TUFE-deflated) active return vs the frozen benchmark floor (Section 6).
+    """The strategy's TOTAL return vs the frozen benchmark floor (Section 6).
 
-    ``nominal_active_ann`` is the engine's annualized nominal active return over
-    the [d0, d1] window; ``d0``/``d1`` are that window's first/last return-dates.
+    RR-Y1-028 (D3) -- MATHEMATICAL BUG FIX, declared explicitly per ADR-0005.
+
+    This function used to receive the ANNUALIZED ACTIVE return (``tilt - EW-universe``, a
+    DIFFERENCE) and do two things to it that do not follow:
+
+        real_active = (1 + nominal_ACTIVE) / (1 + TUFE) - 1     # deflating a SPREAD
+        beats       = real_active > max(TUFE, TLREF)            # REAL vs NOMINAL
+
+    Deflation applies to levels, not to differences: inflation is common to both legs of
+    ``tilt - benchmark`` and has already cancelled in the spread. Comparing the (wrongly)
+    deflated spread against a nominal rate then demanded that a tilt beat its OWN benchmark
+    by more than the inflation rate -- in the 2019-2026 window (TUFE ~38%/yr) an unpassable
+    bar for any honest long-only strategy.
+
+    The corrected gate judges the strategy's TOTAL nominal return
+    (``EW-benchmark + net-active``) against the nominal floor, i.e. like against like. The
+    real-vs-real comparison is algebraically identical and is exposed too
+    (``real_total_ann`` vs ``benchmark_floor_real_ann``).
+
+    ``nominal_active_ann`` is optional and purely descriptive: when supplied, the retained
+    ``real_active_ann`` field is populated with the old quantity so historical outputs stay
+    interpretable. It plays no part in the verdict.
+
     Never raises on a silent TLREF NaN: it records a guard message and falls back
     to TUFE-only (the d213-precedent silent-NaN trap).
     """
@@ -120,20 +153,30 @@ def benchmark_floor(
         floor_components.append(tlref_ann)
     benchmark_floor_ann = max(floor_components) if floor_components else float("nan")
 
-    if np.isfinite(tufe_ann):
-        real_active_ann = (1.0 + nominal_active_ann) / (1.0 + tufe_ann) - 1.0
-    else:
-        real_active_ann = float("nan")
+    def _deflate(x: float) -> float:
+        return (1.0 + x) / (1.0 + tufe_ann) - 1.0 if np.isfinite(tufe_ann) else float("nan")
 
-    if np.isfinite(real_active_ann) and np.isfinite(benchmark_floor_ann):
-        beats: bool | None = bool(real_active_ann > benchmark_floor_ann)
+    real_total_ann = _deflate(nominal_total_ann)
+    benchmark_floor_real_ann = _deflate(benchmark_floor_ann)
+    # RETAINED, descriptive only (D3): the old deflated-spread quantity. Never adjudicated.
+    real_active_ann = (
+        _deflate(nominal_active_ann) if nominal_active_ann is not None else float("nan")
+    )
+
+    # D3: like against like. nominal TOTAL vs nominal floor. (Deflating both sides by the
+    # same TUFE is a monotone transform, so real-vs-real yields the identical boolean --
+    # which is exactly what the old real-vs-NOMINAL comparison did not.)
+    if np.isfinite(nominal_total_ann) and np.isfinite(benchmark_floor_ann):
+        beats: bool | None = bool(nominal_total_ann > benchmark_floor_ann)
     else:
         beats = None
 
     return BenchmarkFloor(
-        real_active_ann=real_active_ann,
+        real_total_ann=real_total_ann,
         benchmark_floor_ann=benchmark_floor_ann,
+        benchmark_floor_real_ann=benchmark_floor_real_ann,
         beats_benchmark_floor=beats,
+        real_active_ann=real_active_ann,
         tufe_ann=tufe_ann,
         tlref_ann=tlref_ann,
         guard_raised=bool(messages),
