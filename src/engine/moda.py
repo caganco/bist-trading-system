@@ -152,6 +152,36 @@ def _window_median_adv(
     return win.median(skipna=True)
 
 
+def _pit_floor(
+    panel: Panel,
+    asof: pd.Timestamp,
+    *,
+    base_tl: float = config.ELIGIBLE_ADV_FLOOR_BASE_TL,
+    base_date: str = config.ELIGIBLE_ADV_FLOOR_BASE_DATE,
+) -> float:
+    """The tradability floor at ``asof``, in ``asof``-dated TL (RR-Y1-030).
+
+        floor(t) = base_tl * TUFE(t) / TUFE(base_date)
+
+    Look-ahead-safe: every term is knowable at ``t``. This replaces RR-Y1-028's end-of-window
+    denomination, which required TUFE(d1) -- the future -- merely to express the bar.
+
+    The bar itself is UNCHANGED in real terms: ``base_tl`` is the committed 2.0M TL anchor
+    re-expressed at the base date. Returns ``base_tl`` unadjusted when CPI is unavailable; the
+    guard never fabricates a factor.
+    """
+    if panel.tufe is None or panel.tufe.dropna().empty:
+        return float(base_tl)
+    try:
+        lvl_t = float(panel.tufe.asof(pd.Timestamp(asof)))
+        lvl_b = float(panel.tufe.asof(pd.Timestamp(base_date)))
+    except (KeyError, TypeError, ValueError):
+        return float(base_tl)
+    if not (np.isfinite(lvl_t) and np.isfinite(lvl_b)) or lvl_b <= 0.0 or lvl_t <= 0.0:
+        return float(base_tl)
+    return float(base_tl * lvl_t / lvl_b)
+
+
 def _eligible_names(
     panel: Panel,
     names: list[str],
@@ -163,33 +193,54 @@ def _eligible_names(
     trailing: int,
     min_coverage: float = config.ELIGIBLE_MIN_COVERAGE,
     tufe_indexed: bool = config.ELIGIBLE_ADV_FLOOR_TUFE_INDEXED,
+    legacy_window_rule: bool = False,
 ) -> list[str]:
-    """Names tradable over the evaluation window (RR-Y1-028, D1a/b/c).
+    """Names tradable AS OF ``split_asof`` -- point-in-time (RR-Y1-030).
 
-    Frozen ex-ante in docs/yol1/STAGE0_RR-Y1-028_D1_universe_calibration.json. Three defects
-    are corrected together, because each one alone still left the pool below the arm-formation
-    floor (48 / 74 / 38 names against the 100 needed -- see the pre-registration's diagnostics):
+    LOOK-AHEAD INVARIANT (the whole point of this function):
 
-      D1a  liquidity was sampled at a SINGLE date (``split_asof``) -> now the window MEDIAN.
-      D1b  the floor was a fixed NOMINAL TL constant in a ~40%/yr-inflation market -> now
-           declared in end-of-window TL and TUFE-indexed, so it asks the same REAL question.
-      D1c  ``min_cov=1.0`` demanded a non-NaN close on EVERY trading day of ~1700 -- a hidden
-           survivorship/continuity filter that removed 89% of the universe -> now
-           ``ELIGIBLE_MIN_COVERAGE``, which tolerates ordinary halts/VBTS suspensions.
+        the eligible set is a function of {value_tl(s), tufe(s) : s <= split_asof} and frozen
+        constants. NOTHING dated after ``split_asof`` may change it.
 
-    ``split_asof`` is retained in the signature (committed callers pass it) but no longer
-    selects the liquidity sample; it is kept so the call sites need not change.
+    A test enforces this by injecting arbitrary data strictly after ``split_asof`` and asserting
+    the result is byte-identical.
 
-    The floor is FLAT and declared in end-of-window TL; it is the ADV that is deflated into that
-    unit (see ``_real_adv_deflator``). Scaling the floor instead would work too, but the
-    eligibility statistic is a window aggregate, so which direction to scale is easy to get
-    backwards -- deflating the series removes the ambiguity.
+    WHAT WAS WRONG (RR-Y1-028 -> RR-Y1-029). The previous rule selected the universe from the
+    MEDIAN over [d0, d1] of each name's trailing traded value AND from attendance over [d0, d1].
+    Both read the future half of the evaluation window, and RR-Y1-029 measured the result: against
+    a point-in-time rule the window rule threw out 98 names -- 39 delisted/halted out and 59 that
+    dried up -- and admitted 26 that only became liquid later. Nothing unattributed. It built a
+    universe of SURVIVORS.
+
+    THE FIX, in three parts:
+
+    1. Liquidity: the TRAILING-``trailing``-day median traded value as of ``split_asof`` (the
+       look-ahead-safe statistic the original pre-RR-Y1-028 rule already used).
+    2. The floor: re-anchored to a fixed BASE DATE (see ``_pit_floor``). RR-Y1-028's
+       end-of-window denomination needed TUFE(d1) just to state the bar, so reverting the
+       statistic ALONE would not have closed the look-ahead.
+    3. Attendance: DROPPED. There is no look-ahead-safe version of "will this name still be
+       trading in the future". It is unnecessary: the engine already tolerates a casualty --
+       ``_arm_active_series`` and ``rank_ic_series`` drop non-finite pairs per date and skip
+       dates below the cross-section floor, so a name that dies simply stops contributing from
+       the day it stops trading, instead of being retroactively erased from the universe. That
+       is what the returns/cost path has always done (``panel.names`` + a per-date mask).
+
+    ``legacy_window_rule=True`` restores the RR-Y1-028 window behaviour. It exists ONLY so the
+    RR-Y1-029 before/after comparison stays reproducible; it is never the default, and it is
+    look-ahead-UNSAFE by construction. ``d0`` / ``d1`` / ``min_coverage`` / ``tufe_indexed`` are
+    consumed only on that path.
     """
-    adv = _window_median_adv(
-        panel, names, d0, d1, trailing=trailing, tufe_indexed=tufe_indexed
-    )
-    liquid = [str(n) for n in adv[adv >= floor_tl].dropna().index]
-    return continuous_basket(panel, d0, d1, names=liquid, min_cov=min_coverage)
+    if legacy_window_rule:
+        adv = _window_median_adv(
+            panel, names, d0, d1, trailing=trailing, tufe_indexed=tufe_indexed
+        )
+        liquid = [str(n) for n in adv[adv >= floor_tl].dropna().index]
+        return continuous_basket(panel, d0, d1, names=liquid, min_cov=min_coverage)
+
+    adv = _trailing_adv(panel, names, split_asof, trailing=trailing)
+    floor = _pit_floor(panel, split_asof, base_tl=floor_tl)
+    return sorted(str(n) for n in adv[adv >= floor].dropna().index)
 
 
 def _pair_randomize(ranked: list[str], rng: np.random.Generator) -> tuple[list[str], list[str]]:

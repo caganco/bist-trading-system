@@ -1,0 +1,157 @@
+{
+  "id": "RR-Y1-030 -- direction + multi-probe + impact",
+  "spec": "STAGE0_RR-Y1-030_pit_eligibility.json",
+  "expectation_source": "RR-Y1-029 (independent, earlier directive) -- NOT derived here",
+  "1_DIRECTION": {
+    "shipped_window_rule (legacy)": 231,
+    "PIT (this fix)": 305,
+    "expected_from_RR_Y1_029": "303 <= n <= 310",
+    "in_expected_band": true,
+    "floor_at_d0_TL": 227611.0,
+    "floor_at_d1_TL": 2000001.0,
+    "floor_equivalence_check": {
+      "committed_end_of_window_anchor_TL": 2000000.0,
+      "pit_floor_evaluated_at_d1_TL": 2000001.0,
+      "relative_error": 0.0,
+      "reading": "the re-anchored floor must land back on the committed 2.0M real bar at the end of the window -- this is a change of reference point, not of the threshold."
+    },
+    "STOP_CONDITIONS_FIRED": []
+  },
+  "2a_probe_validity": {
+    "question": "is lowvol63 ACTUALLY correlated with survival on this panel? (do not assume)",
+    "n_casualties (coverage < 95% over the window)": 68,
+    "n_survivors": 323,
+    "median_63d_vol_at_d0_casualties": 0.02966,
+    "median_63d_vol_at_d0_survivors": 0.02335,
+    "casualties_are_more_volatile": true,
+    "reading": "if casualties are NOT more volatile, then lowvol63 is not survivorship-correlated on this panel and a null result from it would prove nothing -- a different probe would be needed. Reported before any probe result is interpreted."
+  },
+  "2b_MULTI_PROBE": {
+    "scope_guard": "These are KNOWN-ANSWER probes used to measure the INSTRUMENT's sensitivity to the peek. No candidate is re-adjudicated: hi52/mom120/lowvol63/value_static are all closed on the INDEPENDENT screening path (D-203/204/205/208, NRR-007/008), which this directive does not touch. No verdict about any of them is produced or implied.",
+    "probes": {
+      "hi52 (momentum-shaped; RR-Y1-029's single probe)": {
+        "with_peek_legacy_universe": {
+          "n": 231,
+          "agreement_measured": true,
+          "agreement_pass": true,
+          "t_cross": 2.817,
+          "sign_consistency": 1.0,
+          "pbo": 0.0,
+          "confidence": "high"
+        },
+        "without_peek_PIT_universe": {
+          "n": 305,
+          "agreement_measured": true,
+          "agreement_pass": true,
+          "t_cross": 2.5765,
+          "sign_consistency": 1.0,
+          "pbo": 0.0,
+          "confidence": "high"
+        },
+        "delta_t_cross (PIT - legacy)": -0.2405,
+        "verdict_flipped": false
+      },
+      "mom120": {
+        "with_peek_legacy_universe": {
+          "n": 231,
+          "agreement_measured": true,
+          "agreement_pass": false,
+          "t_cross": 0.2451,
+          "sign_consistency": 0.32,
+          "pbo": 0.57,
+          "confidence": "high"
+        },
+        "without_peek_PIT_universe": {
+          "n": 305,
+          "agreement_measured": true,
+          "agreement_pass": false,
+          "t_cross": -0.0078,
+          "sign_consistency": 0.04,
+          "pbo": 0.69,
+          "confidence": "high"
+        },
+        "delta_t_cross (PIT - legacy)": -0.2529,
+        "verdict_flipped": false
+      },
+      "lowvol63 (SURVIVORSHIP-CORRELATED)": {
+        "with_peek_legacy_universe": {
+          "n": 231,
+          "agreement_measured": true,
+          "agreement_pass": true,
+          "t_cross": 5.1069,
+          "sign_consistency": 1.0,
+          "pbo": 0.26,
+          "confidence": "high"
+        },
+        "without_peek_PIT_universe": {
+          "n": 305,
+          "agreement_measured": true,
+          "agreement_pass": true,
+          "t_cross": 5.3923,
+          "sign_consistency": 1.0,
+          "pbo": 0.35,
+          "confidence": "high"
+        },
+        "delta_t_cross (PIT - legacy)": 0.2854,
+        "verdict_flipped": false
+      },
+      "value_static": {
+        "with_peek_legacy_universe": {
+          "n": 231,
+          "agreement_measured": true,
+          "agreement_pass": false,
+          "t_cross": 2.8216,
+          "sign_consistency": 1.0,
+          "pbo": 0.69,
+          "confidence": "high"
+        },
+        "without_peek_PIT_universe": {
+          "n": 305,
+          "agreement_measured": true,
+          "agreement_pass": false,
+          "t_cross": 2.9784,
+          "sign_consistency": 1.0,
+          "pbo": 0.52,
+          "confidence": "high"
+        },
+        "delta_t_cross (PIT - legacy)": 0.1568,
+        "verdict_flipped": false
+      }
+    }
+  },
+  "3_IMPACT_verdict_bearing_fields": {
+    "claim": "nw_t / gross / net / cost / dsr / beats_benchmark_floor come from the eligibility-FREE path (harness._tilt_active uses panel.names; modb uses panel.names). Changing eligibility must not move them AT ALL.",
+    "method": "measured now, then diffed against the values RECORDED BEFORE this fix in docs/yol1/RR-Y1-028_d3_impact_scan.json. Not asserted from first principles.",
+    "values_now": {
+      "hi52": {
+        "gross_active_ann": 0.11551388,
+        "net_active_ann": -0.23583953,
+        "cost_ann": 0.34685341,
+        "nw_t": 4.34730877,
+        "dsr": 1.0,
+        "beats_benchmark_floor": true
+      },
+      "mom120": {
+        "gross_active_ann": 0.03435477,
+        "net_active_ann": -0.28766295,
+        "cost_ann": 0.31751772,
+        "nw_t": 1.4293369,
+        "dsr": 1.0,
+        "beats_benchmark_floor": true
+      }
+    },
+    "values_recorded_before_the_fix": {
+      "hi52": {
+        "gross_active_ann": 0.11551388343719902,
+        "nw_t": 4.34730877163932
+      },
+      "mom120": {
+        "gross_active_ann": 0.03435477080696129,
+        "nw_t": 1.4293369004615428
+      }
+    },
+    "fields_that_moved": [],
+    "VERDICT": "BYTE-IDENTICAL -- eligibility does not leak into any verdict-bearing field, confirming RR-Y1-029's scope finding."
+  },
+  "VERDICT": "DIRECTION CONFIRMED -- the PIT universe is larger, in the band RR-Y1-029 independently predicted, and Mod-A still fires. See the probe table for how much the peek actually mattered."
+}

@@ -1,0 +1,132 @@
+{
+  "id": "RR-Y1-028-V -- independent measurement-verification of the RR-Y1-028 fixes",
+  "class": "verification of an INSTRUMENT REPAIR. Not a new bug hunt, not a re-measurement of any candidate, not a graveyard revival.",
+
+  "freeze_order_attestation": "This plan is written and committed BEFORE any verification check is executed. The checks, their expected outcomes, and the mutation (negative-control) that each check must be killed by are all fixed here. No check will be added, removed or relaxed after seeing a result. If a check fails, the corresponding fix is reported SUSPECT -- it is not quietly re-specified.",
+  "frozen_before_results": true,
+  "date_frozen": "2026-07-13",
+
+  "governing_principle": "A fix's PASS is not evidence unless deliberately breaking the fix makes the check FAIL. Every claim below therefore carries a MUTATION: the production behaviour is monkeypatched back to the bug, and the check MUST go red. A check that stays green under mutation is BLIND and proves nothing. Exit-0 is not trusted.",
+
+  "read_mostly_constraint": "Adds tests + this plan + a result record. Changes NO production code. All mutations are applied via monkeypatch inside the test process and never touch src/.",
+
+  "PHASE_0_what_correct_looks_like": {
+    "D2": {
+      "claim": "gross_active_ann is the annualized active return of a tilt evaluated on OVERLAPPING h-day forward returns; its annualizer is 252/h.",
+      "verdict_under_test": "PASS (the fix claims correctness)",
+      "dangerous_error": "false-PASS -- a fix that looks right at the one horizon the tests happen to use (h=1) but is still wrong elsewhere",
+      "riskiest_steps": ["the annualizer itself", "per_regime / plateau_map, which annualize separately", "the HAC bandwidth, which must widen with the overlap"]
+    },
+    "D3": {
+      "claim": "beats_benchmark_floor compares the strategy's TOTAL nominal return against the nominal floor; the CPI deflation is applied to a total, never to a spread.",
+      "verdict_under_test": "PASS",
+      "dangerous_error": "false-PASS -- the gate flips to True for the wrong reason (e.g. the fix accidentally loosened the floor, rather than correcting what is compared)",
+      "riskiest_steps": ["which quantity is handed to benchmark_floor", "whether anything OTHER than the floor path moved", "whether the retained legacy field silently changed value"]
+    },
+    "D1d": {
+      "claim": "an unmeasured gate yields INCONCLUSIVE; a measured failure still yields DROP.",
+      "verdict_under_test": "PASS",
+      "dangerous_error": "false-PASS in the MOST dangerous direction: the fix launders REAL negatives into INCONCLUSIVE, so failing candidates stop failing. This is the single most important negative-control in this plan.",
+      "riskiest_steps": ["the tri-state reducer", "the backward-compat path for outputs that predate the flag"]
+    },
+    "D1abc": {
+      "claim": "the recalibrated eligibility is what makes Mod-A executable (38 -> 231), and it does so without admitting genuinely illiquid names.",
+      "verdict_under_test": "PASS",
+      "dangerous_error": "false-PASS -- the pool grew for a reason other than the stated calibration (e.g. the coverage relaxation alone did it, and the tradability anchor is decoration)",
+      "riskiest_steps": ["attributing the 38->231 jump to the right filter", "the CPI-deflator direction", "whether the floor still excludes anyone"]
+    }
+  },
+
+  "CHECKS": {
+    "D2_1_metamorphic_h_invariance": {
+      "type": "metamorphic",
+      "relation_derivation": "active.mean() is the mean of OVERLAPPING h-day active returns ~ h * mu_1 (mu_1 = mean daily active). gross_ann = active.mean() * (252/h) ~ 252 * mu_1 -- INDEPENDENT of h. The old code used *252, giving ~252*h*mu_1, i.e. PROPORTIONAL to h.",
+      "directive_formula_correction": "The task text says 'gross_ann x h ~ constant'. That would imply gross_ann ~ 1/h, which is neither the old nor the corrected behaviour. The parenthetical in the same line ('h-invaryant olmali') is the correct statement and is what is tested. The task's 'x h' is treated as a slip; the derivation above is authoritative, and the old code's gross_ann ~ h is proven separately in D2_3.",
+      "procedure": "Static signal (fixed score vector), synthetic panel with small daily returns so the linearity above is tight. Run _returns_cost at h in {1,5,10,21,63}. Compare gross_active_ann across horizons.",
+      "expected": "max/min ratio of |gross_active_ann| across the five horizons within 1.25 (tolerance covers arithmetic-vs-compound drift, not an h-scaling).",
+      "MUTATION": "monkeypatch harness._annualizer -> lambda yr, h: yr  (the bug).",
+      "expected_under_mutation": "the same ratio must EXCEED 10 (it should be ~63). If it does not, the check is blind."
+    },
+    "D2_2_h1_byte_identity": {
+      "type": "differential (zero-regression)",
+      "procedure": "At h=1 compute gross_active_ann with the shipped code and, independently, the pre-fix formula active.mean()*252. Compare with == (exact float equality, not approx).",
+      "expected": "bit-identical.",
+      "MUTATION": "none needed -- this check is an exact identity; a fix that changed h=1 would fail it outright."
+    },
+    "D2_3_old_code_scaled_with_h": {
+      "type": "differential (proves the bug existed, so the fix is not fixing nothing)",
+      "procedure": "Under the mutation of D2_1, assert gross_ann(h)/gross_ann(1) ~ h for h in {5,21}.",
+      "expected": "ratio within 20% of h.",
+      "note": "This is the positive control FOR THE BUG: it demonstrates the defect is real and h-proportional, which is the premise of the whole fix."
+    },
+    "D2_4_nw_lag_widens": {
+      "type": "metamorphic + differential",
+      "procedure": "(a) assert DialConfig().nw_lag_for(DAILY, h=21) == 21 and == 5 at h=1. (b) On the SAME overlapping h=21 active series, compute nw_tstat at lag=5 and at lag=21; the lag=21 |t| must be strictly SMALLER (a too-narrow HAC bandwidth understates the SE of an overlapping series and inflates t).",
+      "expected": "|t(lag=21)| < |t(lag=5)|.",
+      "MUTATION": "monkeypatch DialConfig.nw_lag_for to always return NW_LAG_DAILY; assert the harness's emitted nw_t then equals the lag=5 value (i.e. the widening is actually wired into _returns_cost, not merely available)."
+    },
+    "D3_1_isolation_differential": {
+      "type": "differential (isolation)",
+      "procedure": "Run harness() twice on the same panel/signal/spec: (a) shipped, (b) with benchmark.benchmark_floor monkeypatched to the PRE-FIX behaviour (deflate the ACTIVE spread; compare REAL vs NOMINAL floor). Diff every field of EngineOutput.",
+      "expected": "the ONLY fields that differ are the floor-path fields (real_total_ann, benchmark_floor_real_ann, beats_benchmark_floor, strategy_total_ann, benchmark_ew_ann, and real_active_ann only if the old path did not populate it). gross_active_ann, net_active_ann, cost_ann, tax_ann, mean_rt_bps, nw_t, n_obs, dsr, pbo, agreement_*, per_regime, plateau_map must be IDENTICAL.",
+      "MUTATION": "not applicable -- this check IS the mutation (old vs new). Its power comes from requiring that nothing else moved."
+    },
+    "D3_2_mechanical_what_is_deflated": {
+      "type": "mechanical (code-path assertion, not a claim)",
+      "procedure": "Spy on benchmark_floor: record the first positional argument the harness actually passes. Assert it equals (benchmark_ew_ann + net_active_ann) and NOT net_active_ann.",
+      "expected": "the deflator's input is the TOTAL. Also assert the two differ materially (so the assertion is not vacuous on a panel where bench_ann ~ 0).",
+      "MUTATION": "monkeypatch the harness call site is not possible without touching src; instead assert the recorded arg != net_active_ann. If a future regression reverted the call site, this fires."
+    },
+    "D3_3_sanity_grid": {
+      "type": "differential (known-answer grid)",
+      "procedure": "3 net-active tilts {+5%, +10%, -5%} x 3 CPI levels {20%, 38%, 60%}, with an EW benchmark whose nominal return is set to (CPI + 20pp) so the benchmark itself genuinely beats inflation. For each cell compute OLD gate and NEW gate.",
+      "expected_old": "the old gate FAILS every cell where the tilt is positive -- i.e. it is unpassable, which is the bug being proven, not assumed.",
+      "expected_new": "the new gate PASSES exactly the cells where (benchmark + net_active) > max(CPI, TLREF), and FAILS the ones where it does not. In particular a -5% tilt on a benchmark that still clears the floor should PASS (the STRATEGY beat inflation even though the tilt subtracted), and no cell should pass merely because the tilt was large."
+    },
+    "D3_4_strangler_legacy_field": {
+      "type": "differential (contract preservation)",
+      "procedure": "For a given (net_active, CPI), assert BenchmarkFloor.real_active_ann == (1+net_active)/(1+CPI)-1 EXACTLY -- the pre-fix quantity, byte-identical.",
+      "expected": "exact equality. The retained field must not have silently changed meaning.",
+      "MUTATION": "assert it is NOT equal to the new real_total_ann (i.e. the two are genuinely different quantities and the old name was not quietly repointed at the new number)."
+    },
+    "D1d_1_three_paths": {
+      "type": "differential",
+      "procedure": "measured+pass -> KEEP; measured+fail -> DROP; unmeasured -> INCONCLUSIVE.",
+      "expected": "as stated."
+    },
+    "D1d_2_NEGATIVE_CONTROL_real_negatives_not_laundered": {
+      "type": "placebo / negative control -- THE CRITICAL ONE",
+      "rationale": "The whole risk of D1d is that, in making 'could not measure' stop being a FAIL, it also makes REAL failures stop being failures. If a genuine measured FAIL escapes to INCONCLUSIVE, the fix has broken the keep-bar in the most dangerous possible direction.",
+      "procedure": "(a) Inject a measured FAIL on EVERY keep-bar condition, one at a time, and on all at once; assert DROP each time. (b) Inject a measured FAIL simultaneously with an UNMEASURED condition; assert DROP still wins (a real failure is decisive; it must not be softened to INCONCLUSIVE by the presence of an unmeasured gate).",
+      "MUTATION": "monkeypatch keep_bar._tri to return NOT_MEASURED unconditionally; assert (a) and (b) then FAIL. If they still pass, the negative control is blind and D1d is UNVERIFIED."
+    },
+    "D1abc_1_attribution": {
+      "type": "differential (which filter actually unblocked Mod-A?)",
+      "procedure": "On the real panel, count eligible names under: (i) the OLD rule, (ii) coverage-relaxation ONLY (0.95, old 10M single-date floor), (iii) tradability-floor ONLY (2M TUFE-indexed window-median, min_cov=1.0), (iv) the shipped calibration (both).",
+      "expected": "(i) < 100 (Mod-A blocked). (iv) >= 100. Report (ii) and (iii) HONESTLY: if either alone already clears 100, then the claim 'each filter is independently below the bar, so fixing one would not have helped' is FALSE and must be corrected in the RR report.",
+      "note": "This check can DISCONFIRM a statement already made in the merged report. That is the point of running it."
+    },
+    "D1abc_2_floor_still_bites": {
+      "type": "placebo / negative control",
+      "procedure": "Assert a synthetic name with real ADV far below the floor is still excluded, and that lowering the floor to ~0 admits it.",
+      "expected": "the floor is load-bearing, not decorative."
+    },
+    "D1abc_3_deflator_direction": {
+      "type": "metamorphic",
+      "procedure": "TUFE(end)/TUFE(t) must be > 1 early, == 1 at the end, monotone decreasing.",
+      "MUTATION": "invert the deflator (use TUFE(t)/TUFE(end)); assert the eligible count then DROPS below the old rule's, proving the direction is load-bearing and not cosmetic."
+    }
+  },
+
+  "KNOWN_SCOPE_LIMITS_declared_in_advance": [
+    "Mod-A eligibility is defined over the FULL evaluation window [d0, d1] -- both before and after RR-Y1-028 (the pre-existing continuous_basket(d0, d1) already did this). The calibration extends that window-wide selection from continuity to liquidity as well. This is look-ahead with respect to d0 in the strict sense. It is applied symmetrically to both arms and uses no return data, so it cannot manufacture a conjugate agreement by itself -- but it is a real property of the design and is reported as a CAVEAT, not verified away.",
+    "The verification cannot certify that the numbers PRODUCED by the now-executable Mod-A leg are correct -- only that the leg now executes and that the eligibility rule behaves as specified. Whether the conjugate statistic itself is correctly computed is RR-Y1-005's own validation surface, out of scope here.",
+    "No positive-control (a market/period where the engine's verdicts are independently known to be right) exists for the engine as a whole; the differential checks are against the engine's OWN pre-fix behaviour, which establishes that the fixes do what they claim, NOT that the surrounding engine is correct."
+  ],
+
+  "VERDICT_CLASSES": {
+    "TRUSTWORTHY": "every check passed AND every mutation killed its check.",
+    "TRUSTWORTHY-WITH-CAVEATS": "no check failed, but some could not be constructed; the caveats are listed.",
+    "SUSPECT": "at least one check failed, or at least one mutation FAILED TO KILL its check (a blind check proves nothing). Name the bug hypothesis; the corresponding fix is suspended as unverified."
+  }
+}
