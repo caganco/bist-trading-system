@@ -445,13 +445,19 @@ pytestmark_data = pytest.mark.skipif(not _HAS_DATA, reason="clean_universe parqu
 class TestD1abcEligibilityAttribution:
     """Which filter ACTUALLY unblocked Mod-A? The RR-Y1-028 report claims 'each filter is
     independently below the bar, so fixing one alone would not have helped'. That claim is
-    testable -- and this check can DISCONFIRM it. That is the point of running it."""
+    testable -- and this check can DISCONFIRM it. That is the point of running it.
+
+    RR-Y1-030 note: the claim under test is about RR-Y1-028's WINDOW rule, which is no longer the
+    default (eligibility is now point-in-time). The window rule is retained behind
+    ``legacy_window_rule=True`` precisely so this verification stays reproducible, and the calls
+    below now say so explicitly. Nothing about the claim, or the numbers, is relaxed -- the test
+    simply names the rule it was always measuring.
+    """
 
     @staticmethod
     def _counts():
-        from src.engine.data_adapter import load_panel
+        from src.engine.data_adapter import continuous_basket, load_panel
         from src.engine.moda import _eligible_names, _trailing_adv
-        from src.engine.data_adapter import continuous_basket
 
         p = load_panel()
         d0, d1 = pd.Timestamp("2019-07-03"), pd.Timestamp("2026-04-22")
@@ -465,16 +471,18 @@ class TestD1abcEligibilityAttribution:
         # (ii) coverage relaxation ONLY (old single-date 10M floor, cov 0.95)
         cov_only = len(continuous_basket(p, d0, d1, names=liquid_old, min_cov=0.95))
 
-        # (iii) tradability floor ONLY (new floor + window median + CPI, but perfect attendance)
+        # (iii) tradability floor ONLY (RR-Y1-028 window median + CPI, but perfect attendance)
         floor_only = len(_eligible_names(
             p, p.names, split_asof=d0, d0=d0, d1=d1,
             floor_tl=config.ELIGIBLE_ADV_FLOOR_TL, trailing=tr, min_coverage=1.0,
+            legacy_window_rule=True,
         ))
 
-        # (iv) the shipped calibration
+        # (iv) the RR-Y1-028 calibration as shipped at the time
         both = len(_eligible_names(
             p, p.names, split_asof=d0, d0=d0, d1=d1,
             floor_tl=config.ELIGIBLE_ADV_FLOOR_TL, trailing=tr,
+            legacy_window_rule=True,
         ))
         return old, cov_only, floor_only, both
 

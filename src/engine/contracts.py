@@ -145,14 +145,21 @@ class SplitSpec:
     seed: int = 0
     cpcv_n: int = config.CPCV_DAILY_N  # Mod-B temporal CPCV blocks
     cpcv_k: int = config.CPCV_DAILY_K
-    # RR-Y1-028 (D1b): the Mod-A eligibility floor. Was LIQUID_ADV_MIN_TL (1e7) -- a capacity
-    # constraint this operator does not have, which left only 38 eligible names against the 100
-    # needed for two arms, so the conjugate leg never executed on real BIST data at all. Now the
-    # tradability-anchored, TUFE-indexed ELIGIBLE_ADV_FLOOR_TL, frozen ex-ante in
-    # docs/yol1/STAGE0_RR-Y1-028_D1_universe_calibration.json. Stage-0 records this value in its
-    # `split_arm_floor` field, so any run's universe bar stays auditable.
+    # The Mod-A eligibility floor.
+    #
+    # RR-Y1-028 (D1b) replaced LIQUID_ADV_MIN_TL (1e7 -- a capacity constraint this operator does
+    # not have, which left 38 eligible names against the 100 needed) with a tradability-anchored
+    # bar. RR-Y1-030 keeps that bar but changes its DENOMINATION: it is now stated in BASE-DATE TL
+    # and CPI-indexed forward to each decision date
+    #     floor(t) = split_arm_floor_tl * TUFE(t) / TUFE(ELIGIBLE_ADV_FLOOR_BASE_DATE)
+    # because the previous end-of-window denomination required TUFE(d1) -- the future -- merely to
+    # express the threshold, which was a look-ahead in its own right.
+    #
+    # The REAL bar is unchanged (227,611 base-date TL == 2.0M end-of-window TL == the same 1%-of-a
+    # -day's-turnover tradability anchor). Stage-0 records this value in its `split_arm_floor`
+    # field, so any run's universe bar stays auditable.
     # NOTE: LIQUID_ADV_MIN_TL itself is UNCHANGED and still governs data_adapter.liquid_names.
-    split_arm_floor_tl: float = config.ELIGIBLE_ADV_FLOOR_TL
+    split_arm_floor_tl: float = config.ELIGIBLE_ADV_FLOOR_BASE_TL
     sort_depth: SortDepth = SortDepth.TERCILE
     min_names_per_arm: int = config.MIN_NAMES_PER_ARM
     name_split_method: NameSplitMethod = NameSplitMethod.LIQUIDITY  # Mod-A only (Section 3.2)

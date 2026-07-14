@@ -52,6 +52,20 @@ TRADING_DAYS_YR = 252.0
 # Kyle impact term is still negligible. Below it, the name is not honestly tradable at this
 # book size. Expressed in END-OF-WINDOW TL and TUFE-indexed backwards (see next constant).
 ELIGIBLE_ADV_FLOOR_TL = 2.0e6
+# RR-Y1-030 (look-ahead safety). The constant above is denominated in END-OF-WINDOW TL, so ANY
+# comparison against it needs TUFE(d1) -- the future. That is a look-ahead in its own right, before
+# the window-median statistic is even considered, and reverting the statistic alone would not have
+# closed it. The floor is therefore re-anchored to a FIXED BASE DATE that precedes every decision:
+#
+#     floor(t) = ELIGIBLE_ADV_FLOOR_BASE_TL * TUFE(t) / TUFE(ELIGIBLE_ADV_FLOOR_BASE_DATE)
+#
+# Every term is knowable at t. This is a change of REFERENCE POINT, not of the threshold: the base
+# value is the SAME REAL bar (2,000,000 / 8.7869, the CPI factor RR-Y1-029 measured across the
+# panel), so evaluated forward it lands back at ~2.0M TL at the end of the window. A test pins that
+# equivalence. ELIGIBLE_ADV_FLOOR_TL is RETAINED: it still names the same real bar, and the legacy
+# window-rule diagnostic path uses it.
+ELIGIBLE_ADV_FLOOR_BASE_TL = 227_611.0
+ELIGIBLE_ADV_FLOOR_BASE_DATE = "2019-07-03"
 # A fixed NOMINAL TL floor is not a fixed bar in a ~40%/yr-inflation market: the same 10M TL
 # floor admitted 48 names in 2019-07 and 169 in 2026-04 -- a ~3.5x swing that is pure currency
 # erosion, not a change in market structure. Indexing asks the same REAL question at every date.
