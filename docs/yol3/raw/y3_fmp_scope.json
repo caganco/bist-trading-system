@@ -1,0 +1,168 @@
+{
+  "id": "RR-Y3-001 part 3 -- FMP free-tier scope: is 402 about the ENDPOINT or the SYMBOL?",
+  "why_it_matters": "if the endpoint is paid, the free tier is useless for any backtest. If only DELISTED symbols are paid, the free tier serves the survivors and hides the casualties -- which is survivorship bias sold as a free tier. Opposite consequences; measured, not guessed.",
+  "endpoint_vs_symbol_matrix": {
+    "AAPL (live mega-cap)": {
+      "quote": {
+        "http": 200,
+        "n": 1,
+        "head": null
+      },
+      "historical-price-eod/full": {
+        "http": 200,
+        "n": 1254,
+        "head": null
+      },
+      "income-statement": {
+        "http": 200,
+        "n": 4,
+        "head": null
+      },
+      "profile": {
+        "http": 200,
+        "n": 1,
+        "head": null
+      }
+    },
+    "GAIA (live micro-cap)": {
+      "quote": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "historical-price-eod/full": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "income-statement": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "profile": {
+        "http": 200,
+        "n": 1,
+        "head": null
+      }
+    },
+    "INFIQ (delisted, Ch.11)": {
+      "quote": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "historical-price-eod/full": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "income-statement": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "profile": {
+        "http": 200,
+        "n": 1,
+        "head": null
+      }
+    },
+    "MIMO (delisted, Ch.11)": {
+      "quote": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "historical-price-eod/full": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "income-statement": {
+        "http": 402,
+        "n": null,
+        "head": "Premium Query Parameter: 'Special Endpoint : This value set for 'symbol' is not available under your current subscription please visit our subscription page to "
+      },
+      "profile": {
+        "http": 200,
+        "n": 1,
+        "head": null
+      }
+    }
+  },
+  "delisted_companies_list": {
+    "http": 200,
+    "n_on_page_0": 100,
+    "fields_present": [
+      "companyName",
+      "delistedDate",
+      "exchange",
+      "ipoDate",
+      "symbol"
+    ],
+    "sample_rows": [
+      {
+        "symbol": "SPCZ",
+        "companyName": "RiverNorth Enhanced Pre-Merger SPAC ETF",
+        "exchange": "CBOE",
+        "ipoDate": "2022-07-12",
+        "delistedDate": "2026-07-09"
+      },
+      {
+        "symbol": "PMA",
+        "companyName": "Ming Shing Group Holdings Limited",
+        "exchange": "NASDAQ",
+        "ipoDate": "2024-11-22",
+        "delistedDate": "2026-07-09"
+      },
+      {
+        "symbol": "RNWZ",
+        "companyName": "TrueShares Eagle Global Renewable Energy Income ETF",
+        "exchange": "AMEX",
+        "ipoDate": "2022-12-09",
+        "delistedDate": "2026-07-09"
+      },
+      {
+        "symbol": "TIPNF",
+        "companyName": "Tyner Resources Ltd.",
+        "exchange": "OTC",
+        "ipoDate": "2010-04-27",
+        "delistedDate": "2026-07-09"
+      },
+      {
+        "symbol": "TBRG",
+        "companyName": "TruBridge, Inc.",
+        "exchange": "NASDAQ",
+        "ipoDate": "2002-05-21",
+        "delistedDate": "2026-07-09"
+      }
+    ],
+    "reading": "a delisted-companies LIST is only useful if it carries a delisting DATE and joins to prices. Fields shown above; judge for yourself."
+  },
+  "coverage_of_our_edgar_sample": {
+    "pages_scanned": 1,
+    "our_tickers": [
+      "ALFI",
+      "ALFIQ",
+      "ARDS",
+      "DNMR",
+      "INFI",
+      "INFIQ",
+      "MIMO",
+      "MIMOQ",
+      "RBT",
+      "RBTC",
+      "SFT",
+      "SFTGQ",
+      "SI",
+      "SICP",
+      "VINC",
+      "WINS",
+      "WINSF"
+    ],
+    "found_in_list": {},
+    "n_found": 0,
+    "caveat": "only the first few pages were scanned (free tier). A miss here is NOT proof of absence from the full list -- it is proof that the list is not trivially joinable."
+  }
+}

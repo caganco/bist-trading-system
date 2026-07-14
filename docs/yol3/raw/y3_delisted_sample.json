@@ -1,0 +1,663 @@
+{
+  "id": "RR-Y3-001 -- independent delisted-company sample, built from SEC EDGAR (zero cost)",
+  "source": "EDGAR full-text search, form 25-NSE (exchange notification of removal from listing)",
+  "liveness_check": "EDGAR company_tickers.json -- a CIK absent from it no longer carries a listed ticker",
+  "why_independent": "the sample must not come from the vendor under test, or the delivery test is circular",
+  "trap_handled": "Form 25-NSE is filed PER SECURITY. Goldman Sachs / Two Harbors / Gladstone appear in the raw feed because they removed a preferred series or a note -- not the company. Filtering on the form alone would have poisoned the sample with mega-caps.",
+  "n_raw_filings": 1300,
+  "n_distinct_issuers": 356,
+  "n_still_listed_excluded": 87,
+  "n_delisted": 22,
+  "delisted_sample": [
+    {
+      "name": "Vincerx Pharma, Inc.",
+      "cik": 1796129,
+      "tickers_in_filing": [
+        "VINC"
+      ],
+      "common_candidates": [
+        "VINC"
+      ],
+      "file_date": "2021-05-05",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Danimer Scientific, Inc.",
+      "cik": 1779020,
+      "tickers_in_filing": [
+        "DNMR",
+        "DNMRW"
+      ],
+      "common_candidates": [
+        "DNMR"
+      ],
+      "file_date": "2021-06-16",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Deerfield Healthcare Technology Acquisitions Corp.",
+      "cik": 1813914,
+      "tickers_in_filing": [
+        "CMAX",
+        "CMAXW"
+      ],
+      "common_candidates": [
+        "CMAX"
+      ],
+      "file_date": "2021-06-08",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "CC Neuberger Principal Holdings I",
+      "cik": 1800347,
+      "tickers_in_filing": [
+        "ETWO",
+        "ETWO-WT"
+      ],
+      "common_candidates": [
+        "ETWO",
+        "ETWO-WT"
+      ],
+      "file_date": "2021-02-08",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Wins Finance Holdings Inc.",
+      "cik": 1640251,
+      "tickers_in_filing": [
+        "WINSF"
+      ],
+      "common_candidates": [
+        "WINSF"
+      ],
+      "file_date": "2021-04-26",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Landsea Homes Corp",
+      "cik": 1721386,
+      "tickers_in_filing": [
+        "LSEA",
+        "LSEAW"
+      ],
+      "common_candidates": [
+        "LSEA"
+      ],
+      "file_date": "2021-01-07",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "SHIFT TECHNOLOGIES, INC.",
+      "cik": 1762322,
+      "tickers_in_filing": [
+        "SFTGQ"
+      ],
+      "common_candidates": [
+        "SFTGQ"
+      ],
+      "file_date": "2021-01-14",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Logan Ridge Finance Corp.",
+      "cik": 1571329,
+      "tickers_in_filing": [
+        "LRFC"
+      ],
+      "common_candidates": [
+        "LRFC"
+      ],
+      "file_date": "2022-05-27",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "TLG Acquisition One Corp.",
+      "cik": 1827871,
+      "tickers_in_filing": [
+        "ELIQQ"
+      ],
+      "common_candidates": [
+        "ELIQQ"
+      ],
+      "file_date": "2022-11-21",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Ignyte Acquisition Corp.",
+      "cik": 1834645,
+      "tickers_in_filing": [
+        "PKBO",
+        "PKBOW"
+      ],
+      "common_candidates": [
+        "PKBO"
+      ],
+      "file_date": "2022-11-01",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Gores Metropoulos II, Inc.",
+      "cik": 1819395,
+      "tickers_in_filing": [
+        "SOND",
+        "SONDW"
+      ],
+      "common_candidates": [
+        "SOND"
+      ],
+      "file_date": "2022-01-18",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "TRIUMPH GROUP INC",
+      "cik": 1021162,
+      "tickers_in_filing": [
+        "TGI"
+      ],
+      "common_candidates": [
+        "TGI"
+      ],
+      "file_date": "2022-03-14",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Alfi, Inc.",
+      "cik": 1833908,
+      "tickers_in_filing": [
+        "ALFIQ"
+      ],
+      "common_candidates": [
+        "ALFIQ"
+      ],
+      "file_date": "2022-10-27",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Airspan Networks Holdings Inc.",
+      "cik": 1823882,
+      "tickers_in_filing": [
+        "MIMOQ"
+      ],
+      "common_candidates": [
+        "MIMOQ"
+      ],
+      "file_date": "2023-01-20",
+      "exchange": "NYSE AMERICAN LLC  (CIK 0001143313)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Allego N.V.",
+      "cik": 1874474,
+      "tickers_in_filing": [
+        "ALLG",
+        "ALLGF"
+      ],
+      "common_candidates": [
+        "ALLG",
+        "ALLGF"
+      ],
+      "file_date": "2023-10-18",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Aridis Pharmaceuticals, Inc.",
+      "cik": 1614067,
+      "tickers_in_filing": [
+        "ARDS"
+      ],
+      "common_candidates": [
+        "ARDS"
+      ],
+      "file_date": "2023-09-08",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Rubicon Technologies, Inc.",
+      "cik": 1862068,
+      "tickers_in_filing": [
+        "RBTC",
+        "RBTCW"
+      ],
+      "common_candidates": [
+        "RBTC"
+      ],
+      "file_date": "2023-10-31",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "INFINITY PHARMACEUTICALS, INC.",
+      "cik": 1113148,
+      "tickers_in_filing": [
+        "INFIQ"
+      ],
+      "common_candidates": [
+        "INFIQ"
+      ],
+      "file_date": "2023-11-20",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "EF Hutton Acquisition Corp I",
+      "cik": 1922858,
+      "tickers_in_filing": [
+        "ECDA",
+        "ECDAW"
+      ],
+      "common_candidates": [
+        "ECDA"
+      ],
+      "file_date": "2023-12-12",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Silvergate Capital Corp",
+      "cik": 1312109,
+      "tickers_in_filing": [
+        "SICP"
+      ],
+      "common_candidates": [
+        "SICP"
+      ],
+      "file_date": "2023-05-11",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "Getaround, Inc",
+      "cik": 1839608,
+      "tickers_in_filing": [
+        "GETR",
+        "GETRW"
+      ],
+      "common_candidates": [
+        "GETR"
+      ],
+      "file_date": "2023-12-13",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    },
+    {
+      "name": "CohBar, Inc.",
+      "cik": 1522602,
+      "tickers_in_filing": [
+        "CWBR"
+      ],
+      "common_candidates": [
+        "CWBR"
+      ],
+      "file_date": "2023-12-27",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": false,
+      "current_ticker_if_any": null
+    }
+  ],
+  "excluded_still_listed": [
+    {
+      "name": "GLADSTONE INVESTMENT CORPORATION\\DE",
+      "cik": 1321741,
+      "tickers_in_filing": [
+        "GAIN",
+        "GAINL",
+        "GAINN",
+        "GAINZ"
+      ],
+      "common_candidates": [
+        "GAIN"
+      ],
+      "file_date": "2021-03-02",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "GAINI"
+    },
+    {
+      "name": "TWO HARBORS INVESTMENT CORP.",
+      "cik": 1465740,
+      "tickers_in_filing": [
+        "TWO",
+        "TWO-PA",
+        "TWO-PB",
+        "TWO-PC"
+      ],
+      "common_candidates": [
+        "TWO"
+      ],
+      "file_date": "2021-03-15",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "TWOD"
+    },
+    {
+      "name": "GOLDMAN SACHS GROUP INC",
+      "cik": 886982,
+      "tickers_in_filing": [
+        "GS",
+        "GSCE",
+        "GS-PA",
+        "GS-PC",
+        "GS-PD"
+      ],
+      "common_candidates": [
+        "GS",
+        "GSCE"
+      ],
+      "file_date": "2021-04-29",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "GS-PD"
+    },
+    {
+      "name": "Royal Dutch Shell plc",
+      "cik": 1306965,
+      "tickers_in_filing": [
+        "SHEL",
+        "RYDAF"
+      ],
+      "common_candidates": [
+        "SHEL",
+        "RYDAF"
+      ],
+      "file_date": "2021-12-22",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "RYDAF"
+    },
+    {
+      "name": "Priority Income Fund, Inc.",
+      "cik": 1554625,
+      "tickers_in_filing": [
+        "PRIF-PD",
+        "PRIF-PF",
+        "PRIF-PG",
+        "PRIF-PH",
+        "PRIF-PI",
+        "PRIF-PJ",
+        "PRIF-PK",
+        "PRIF-PL"
+      ],
+      "common_candidates": [],
+      "file_date": "2021-10-08",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "PRIF-PL"
+    },
+    {
+      "name": "COCA COLA CO",
+      "cik": 21344,
+      "tickers_in_filing": [
+        "KO"
+      ],
+      "common_candidates": [
+        "KO"
+      ],
+      "file_date": "2021-04-08",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "KO"
+    },
+    {
+      "name": "RIO TINTO LTD",
+      "cik": 887028,
+      "tickers_in_filing": [
+        "RTNTF"
+      ],
+      "common_candidates": [
+        "RTNTF"
+      ],
+      "file_date": "2021-12-03",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "RTNTF"
+    },
+    {
+      "name": "BANK OF AMERICA CORP /DE/",
+      "cik": 70858,
+      "tickers_in_filing": [
+        "BAC",
+        "BAC-PB",
+        "BAC-PE",
+        "BAC-PK",
+        "BAC-PL",
+        "BAC-PM",
+        "BAC-PN",
+        "BAC-PO",
+        "BAC-PP",
+        "BML-PG",
+        "BML-PH",
+        "BML-PJ",
+        "BML-PL"
+      ],
+      "common_candidates": [
+        "BAC"
+      ],
+      "file_date": "2021-04-26",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "BAC-PS"
+    },
+    {
+      "name": "HighCape Capital Acquisition Corp.",
+      "cik": 1816431,
+      "tickers_in_filing": [
+        "QSI",
+        "QSIAW"
+      ],
+      "common_candidates": [
+        "QSI"
+      ],
+      "file_date": "2021-06-10",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "QSI"
+    },
+    {
+      "name": "MEDALLION FINANCIAL CORP",
+      "cik": 1000209,
+      "tickers_in_filing": [
+        "MFIN",
+        "MBNKP"
+      ],
+      "common_candidates": [
+        "MFIN",
+        "MBNKP"
+      ],
+      "file_date": "2021-04-14",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "MBNKO"
+    },
+    {
+      "name": "FLOWSERVE CORP",
+      "cik": 30625,
+      "tickers_in_filing": [
+        "FLS"
+      ],
+      "common_candidates": [
+        "FLS"
+      ],
+      "file_date": "2021-03-19",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "FLS"
+    },
+    {
+      "name": "TEXAS CAPITAL BANCSHARES INC/TX",
+      "cik": 1077428,
+      "tickers_in_filing": [
+        "TCBI",
+        "TCBIO"
+      ],
+      "common_candidates": [
+        "TCBI",
+        "TCBIO"
+      ],
+      "file_date": "2021-06-14",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "TCBIO"
+    },
+    {
+      "name": "Acies Acquisition Corp.",
+      "cik": 1823878,
+      "tickers_in_filing": [
+        "MYPS",
+        "MYPSW"
+      ],
+      "common_candidates": [
+        "MYPS"
+      ],
+      "file_date": "2021-06-21",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "MYPS"
+    },
+    {
+      "name": "PRUDENTIAL PLC",
+      "cik": 1116578,
+      "tickers_in_filing": [
+        "PUK",
+        "PUKPF"
+      ],
+      "common_candidates": [
+        "PUK",
+        "PUKPF"
+      ],
+      "file_date": "2021-12-27",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "PUKPF"
+    },
+    {
+      "name": "BP PLC",
+      "cik": 313807,
+      "tickers_in_filing": [
+        "BP",
+        "BPAQF"
+      ],
+      "common_candidates": [
+        "BP",
+        "BPAQF"
+      ],
+      "file_date": "2021-07-13",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "BPPFF"
+    },
+    {
+      "name": "Star Bulk Carriers Corp.",
+      "cik": 1386716,
+      "tickers_in_filing": [
+        "SBLK"
+      ],
+      "common_candidates": [
+        "SBLK"
+      ],
+      "file_date": "2021-07-27",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "SBLK"
+    },
+    {
+      "name": "TANDY LEATHER FACTORY INC",
+      "cik": 909724,
+      "tickers_in_filing": [
+        "TLF"
+      ],
+      "common_candidates": [
+        "TLF"
+      ],
+      "file_date": "2021-02-09",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "TLF"
+    },
+    {
+      "name": "Apex Technology Acquisition Corp",
+      "cik": 1777921,
+      "tickers_in_filing": [
+        "AVPT",
+        "AVPTW"
+      ],
+      "common_candidates": [
+        "AVPT"
+      ],
+      "file_date": "2021-07-01",
+      "exchange": "Nasdaq Stock Market LLC  (CIK 0001354457)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "AVPT"
+    },
+    {
+      "name": "TRUIST FINANCIAL CORP",
+      "cik": 92230,
+      "tickers_in_filing": [
+        "TFC",
+        "TFC-PI",
+        "TFC-PO",
+        "TFC-PR"
+      ],
+      "common_candidates": [
+        "TFC"
+      ],
+      "file_date": "2021-06-01",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "TFC-PR"
+    },
+    {
+      "name": "Lloyds Banking Group plc",
+      "cik": 1160106,
+      "tickers_in_filing": [
+        "LYG",
+        "LLDTF",
+        "LLOBF"
+      ],
+      "common_candidates": [
+        "LYG",
+        "LLDTF",
+        "LLOBF"
+      ],
+      "file_date": "2021-05-07",
+      "exchange": "NEW YORK STOCK EXCHANGE LLC  (CIK 0000876661)",
+      "still_listed_per_EDGAR": true,
+      "current_ticker_if_any": "LLOBF"
+    }
+  ]
+}
